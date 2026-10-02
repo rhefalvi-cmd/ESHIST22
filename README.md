@@ -1,24 +1,24 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EsHist - Eksplorasi Sejarah Interaktif</title>
-    <!-- Tailwind CSS CDN for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        nationalRed: '#DC2626',
-                        nationalDarkRed: '#991B1B',
-                        nationalCream: '#FDFBF7',
-                        nationalCreamCard: '#F4F0E6',
-                        nationalDark: '#1F2937',
+                        esRed: '#DC2626',
+                        esDarkRed: '#991B1B',
+                        esCream: '#FDFBF7',
+                        esWarmWhite: '#FFFDF9',
+                        esGrayText: '#334155'
                     },
                     fontFamily: {
-                        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', 'sans-serif'],
+                        sans: ['Inter', 'sans-serif']
                     }
                 }
             }
@@ -26,1674 +26,1542 @@
     </script>
     <style>
         body {
+            font-family: 'Inter', sans-serif;
             background-color: #FDFBF7;
-            color: #1F2937;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #334155;
             overflow-x: hidden;
         }
-        /* Custom scrollbar */
+
+        /* Page Transition Animations */
+        .page-view {
+            display: none;
+            opacity: 0;
+            transform: translateY(8px) scale(0.99);
+            transition: opacity 350ms cubic-bezier(0.16, 1, 0.3, 1), transform 350ms cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .page-view.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
         }
         ::-webkit-scrollbar-track {
-            background: #F4F0E6;
+            background: #F1F5F9;
         }
         ::-webkit-scrollbar-thumb {
-            background: #DC2626;
-            border-radius: 3px;
+            boolean: true;
+            background: #CBD5E1;
+            border-radius: 9999px;
         }
-        .page-section {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94A3B8;
         }
-        .page-section.active {
-            display: block;
-            opacity: 1;
+
+        /* Card Hover & Micro-interactions */
+        .es-card {
+            transition: all 0.25s ease;
         }
-        .sidebar-item {
-            transition: all 0.2s ease;
+        .es-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
         }
-        .sidebar-item.active {
-            background-color: rgba(220, 38, 38, 0.1);
-            color: #DC2626;
-            border-left: 4px solid #DC2626;
-            font-weight: 700;
+
+        /* Game Memory Card Flip */
+        .perspective-1000 {
+            perspective: 1000px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
+        .transform-style-3d {
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
         }
-        .animate-fade-in {
-            animation: fadeIn 0.35s ease forwards;
+        .rotate-y-180 {
+            transform: rotateY(180deg);
         }
-        .card-shadow {
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        .backface-hidden {
+            backface-visibility: hidden;
         }
     </style>
 </head>
-<body class="bg-nationalCream text-nationalDark min-h-screen flex flex-col md:flex-row selection:bg-nationalRed selection:text-white">
+<body class="h-full flex flex-col md:flex-row bg-esCream text-esGrayText antialiased">
 
-    <!-- Sidebar for Desktop & Tablet -->
-    <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 h-screen sticky top-0 z-30 shadow-sm justify-between">
-        <div class="p-6">
-            <!-- App Logo -->
-            <div class="flex items-center space-x-3 mb-8">
-                <div class="w-10 h-10 bg-nationalRed rounded-2xl flex items-center justify-center text-white font-black text-xl shadow-md">
-                    📚
-                </div>
-                <div>
-                    <h1 class="text-2xl font-black tracking-tight text-nationalDark">Es<span class="text-nationalRed">Hist</span></h1>
-                    <span class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Eksplorasi Sejarah</span>
-                </div>
+    <!-- DESKTOP SIDEBAR -->
+    <aside id="sidebar" class="hidden md:flex flex-col w-64 bg-white border-r border-stone-200 p-6 z-30 shrink-0 select-none shadow-sm">
+        <div class="flex items-center gap-3 mb-8 px-2">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-esRed to-esDarkRed flex items-center justify-center text-white font-bold text-xl shadow-md shadow-red-500/20">
+                Es
             </div>
-
-            <!-- Menu Navigation -->
-            <nav class="space-y-1">
-                <div class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest px-3 mb-2">Menu Utama</div>
-                
-                <button onclick="showPage('home')" id="nav-home" class="sidebar-item active w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">🏠</span>
-                    <span>Beranda</span>
-                </button>
-                
-                <button onclick="showPage('timeline')" id="nav-timeline" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">⏳</span>
-                    <span>Jejak Sejarah</span>
-                </button>
-
-                <button onclick="showPage('videos')" id="nav-videos" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">🎬</span>
-                    <span>Video Edukasi</span>
-                </button>
-                
-                <button onclick="showPage('materials')" id="nav-materials" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">📚</span>
-                    <span>Materi Organisasi</span>
-                </button>
-                
-                <button onclick="showPage('game')" id="nav-game" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">🎮</span>
-                    <span>Memory Match</span>
-                </button>
-                
-                <button onclick="showPage('evaluation')" id="nav-evaluation" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-nationalRed text-left">
-                    <span class="text-lg">📝</span>
-                    <span>Evaluasi Siswa</span>
-                </button>
-            </nav>
+            <div>
+                <h1 class="font-bold text-lg leading-tight text-stone-900">EsHist</h1>
+                <p class="text-xs text-stone-500 font-medium">Eksplorasi Sejarah Interaktif</p>
+            </div>
         </div>
 
-        <!-- Sidebar Footer / About -->
-        <div class="p-6 border-t border-gray-100">
-            <button onclick="showPage('about')" id="nav-about" class="sidebar-item w-full flex items-center space-x-3 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 text-left">
-                <span class="text-base">ℹ️</span>
-                <span>Tentang EsHist</span>
+        <nav class="space-y-1.5 flex-1">
+            <button onclick="switchPage('home')" data-target="home" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">🏠</span> Beranda
             </button>
+            <button onclick="switchPage('timeline')" data-target="timeline" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">⏳</span> Jejak Sejarah
+            </button>
+            <button onclick="switchPage('videos')" data-target="videos" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">🎬</span> Video Edukasi
+            </button>
+            <button onclick="switchPage('materials')" data-target="materials" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">📚</span> Materi
+            </button>
+            <button onclick="switchPage('game')" data-target="game" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">🎮</span> Game
+            </button>
+            <button onclick="switchPage('evaluation')" data-target="evaluation" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">📝</span> Evaluasi
+            </button>
+        </nav>
+
+        <div class="pt-6 border-t border-stone-100">
+            <button onclick="switchPage('about')" data-target="about" class="nav-btn w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-sm font-medium transition-all text-stone-600 hover:bg-stone-50 hover:text-stone-900">
+                <span class="text-lg">ℹ️</span> Tentang
+            </button>
+            <div class="mt-4 p-4 rounded-2xl bg-stone-50 border border-stone-100">
+                <div class="flex justify-between items-center text-xs font-semibold mb-1.5 text-stone-700">
+                    <span>Progress EsHist</span>
+                    <span id="global-progress-text">0%</span>
+                </div>
+                <div class="w-full bg-stone-200 rounded-full h-2 overflow-hidden">
+                    <div id="global-progress-bar" class="bg-esRed h-full transition-all duration-500 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
         </div>
     </aside>
 
-    <!-- Mobile Bottom Navigation Bar -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-40 flex justify-around p-2 shadow-lg">
-        <button onclick="showPage('home')" id="mob-home" class="flex flex-col items-center justify-center p-1.5 text-nationalRed">
-            <span class="text-lg">🏠</span>
-            <span class="text-[9px] font-bold mt-0.5">Beranda</span>
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 px-3 py-2 flex justify-around items-center shadow-lg">
+        <button onclick="switchPage('home')" data-target="home" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">🏠</span>
+            <span class="text-[10px] mt-0.5">Beranda</span>
         </button>
-        <button onclick="showPage('timeline')" id="mob-timeline" class="flex flex-col items-center justify-center p-1.5 text-gray-500">
-            <span class="text-lg">⏳</span>
-            <span class="text-[9px] font-bold mt-0.5">Jejak</span>
+        <button onclick="switchPage('timeline')" data-target="timeline" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">⏳</span>
+            <span class="text-[10px] mt-0.5">Jejak</span>
         </button>
-        <button onclick="showPage('videos')" id="mob-videos" class="flex flex-col items-center justify-center p-1.5 text-gray-500">
-            <span class="text-lg">🎬</span>
-            <span class="text-[9px] font-bold mt-0.5">Video</span>
+        <button onclick="switchPage('videos')" data-target="videos" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">🎬</span>
+            <span class="text-[10px] mt-0.5">Video</span>
         </button>
-        <button onclick="showPage('materials')" id="mob-materials" class="flex flex-col items-center justify-center p-1.5 text-gray-500">
-            <span class="text-lg">📚</span>
-            <span class="text-[9px] font-bold mt-0.5">Materi</span>
+        <button onclick="switchPage('materials')" data-target="materials" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">📚</span>
+            <span class="text-[10px] mt-0.5">Materi</span>
         </button>
-        <button onclick="showPage('game')" id="mob-game" class="flex flex-col items-center justify-center p-1.5 text-gray-500">
-            <span class="text-lg">🎮</span>
-            <span class="text-[9px] font-bold mt-0.5">Game</span>
+        <button onclick="switchPage('game')" data-target="game" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">🎮</span>
+            <span class="text-[10px] mt-0.5">Game</span>
         </button>
-        <button onclick="showPage('evaluation')" id="mob-evaluation" class="flex flex-col items-center justify-center p-1.5 text-gray-500">
-            <span class="text-lg">📝</span>
-            <span class="text-[9px] font-bold mt-0.5">Evaluasi</span>
+        <button onclick="switchPage('evaluation')" data-target="evaluation" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">📝</span>
+            <span class="text-[10px] mt-0.5">Evaluasi</span>
+        </button>
+        <button onclick="switchPage('about')" data-target="about" class="mob-nav-btn flex flex-col items-center p-1.5 text-xs text-stone-500 font-medium transition-all">
+            <span class="text-xl">ℹ️️</span>
+            <span class="text-[10px] mt-0.5">Tentang</span>
         </button>
     </nav>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 flex flex-col min-h-screen pb-20 md:pb-0">
-        
-        <!-- Topbar -->
-        <header class="bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm">
-            <div class="flex items-center space-x-3">
-                <span id="topbar-title" class="text-lg font-black text-nationalDark">Beranda</span>
-                <span class="text-xs bg-red-100 text-nationalRed font-bold px-2.5 py-1 rounded-full uppercase tracking-wider hidden sm:inline-block">SMA Sejarah</span>
+    <!-- MAIN APP CONTAINER -->
+    <main class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden pb-16 md:pb-0">
+        <!-- TOPBAR -->
+        <header class="bg-white/80 backdrop-blur-md border-b border-stone-200 px-6 py-4 flex items-center justify-between z-20 shrink-0">
+            <div class="flex items-center gap-3">
+                <span id="topbar-icon" class="text-xl">🏠</span>
+                <h2 id="topbar-title" class="font-bold text-lg text-stone-900 tracking-tight">Beranda</h2>
             </div>
-            
-            <div class="flex items-center space-x-4">
-                <!-- Progress Widget -->
-                <div class="bg-nationalCreamCard border border-gray-200 px-3 py-1.5 rounded-full flex items-center space-x-2 shadow-inner">
-                    <span class="text-xs font-bold text-gray-600 hidden sm:inline">Progress Belajar:</span>
-                    <span id="topbar-progress-text" class="text-xs font-black text-nationalRed">0%</span>
-                    <div class="w-16 bg-gray-200 rounded-full h-2 overflow-hidden hidden sm:block">
-                        <div id="topbar-progress-bar" class="bg-nationalRed h-full transition-all duration-300" style="width: 0%"></div>
-                    </div>
+            <div class="flex items-center gap-4">
+                <div class="hidden sm:flex flex-col items-end">
+                    <span class="text-xs font-semibold text-stone-500">Progress Belajar</span>
+                    <span id="topbar-progress-text" class="text-xs font-bold text-esRed">0%</span>
                 </div>
-
-                <!-- Avatar User Icon -->
-                <div class="w-9 h-9 bg-nationalRed text-white rounded-full flex items-center justify-center font-bold text-sm shadow-md">
-                    🎓
+                <div class="w-28 bg-stone-200 rounded-full h-2.5 overflow-hidden">
+                    <div id="topbar-progress-bar" class="bg-esRed h-full transition-all duration-500 rounded-full" style="width: 0%"></div>
                 </div>
             </div>
         </header>
 
-        <!-- Content Sections Container -->
-        <div class="p-4 sm:p-8 max-w-6xl mx-auto w-full flex-1">
+        <!-- CONTENT VIEWS CONTAINER -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-8">
 
-            <!-- 1. BERANDA PAGE -->
-            <section id="page-home" class="page-section active animate-fade-in space-y-8">
-                <!-- Hero Card -->
-                <div class="relative overflow-hidden bg-gradient-to-r from-nationalDark to-gray-900 text-white rounded-3xl p-8 sm:p-12 shadow-2xl">
-                    <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">🇮🇩</div>
+            <!-- 1. BERANDA VIEW -->
+            <div id="view-home" class="page-view max-w-6xl mx-auto space-y-8">
+                <!-- Hero Section -->
+                <div class="relative bg-gradient-to-br from-stone-900 via-stone-800 to-esDarkRed text-white rounded-3xl p-8 sm:p-12 overflow-hidden shadow-xl">
+                    <div class="absolute -right-12 -bottom-12 w-64 h-64 bg-esRed/20 rounded-full blur-3xl pointer-events-none"></div>
                     <div class="relative z-10 max-w-2xl space-y-4">
-                        <div class="inline-flex items-center space-x-2 bg-red-600/30 text-red-300 border border-red-500/40 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                            <span>✨ Platform Pembelajaran Interaktif SMA</span>
-                        </div>
-                        <h2 class="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+                        <span class="inline-block px-3 py-1 bg-esRed/30 border border-esRed/40 text-red-200 rounded-full text-xs font-semibold tracking-wide uppercase">
+                            Platform Pembelajaran SMA
+                        </span>
+                        <h1 class="text-3xl sm:text-5xl font-bold tracking-tight text-white leading-tight">
                             Eksplorasi Pergerakan Nasional Indonesia
-                        </h2>
-                        <p class="text-gray-300 text-base sm:text-lg leading-relaxed">
-                            “Kenali tokoh, organisasi, gagasan, video edukatif, dan peristiwa yang membentuk perjalanan menuju Indonesia merdeka.”
+                        </h1>
+                        <p class="text-stone-300 text-sm sm:text-base leading-relaxed">
+                            “Telusuri perkembangan organisasi, tokoh, dan peristiwa penting yang membentuk perjalanan Pergerakan Nasional Indonesia.”
                         </p>
-                        <div class="pt-2 flex flex-wrap gap-3">
-                            <button onclick="showPage('timeline')" class="bg-nationalRed hover:bg-nationalDarkRed text-white font-bold px-6 py-3.5 rounded-2xl shadow-lg hover:shadow-xl transition transform hover:-translate-y-0.5 flex items-center space-x-2 text-sm">
-                                <span>Mulai Eksplorasi</span>
-                                <span class="text-base">→</span>
+                        <p class="text-stone-400 text-xs sm:text-sm font-medium">
+                            Belajar sejarah melalui eksplorasi, visual, permainan, dan evaluasi.
+                        </p>
+                        <div class="flex flex-wrap gap-3 pt-2">
+                            <button onclick="switchPage('timeline')" class="px-6 py-3 bg-esRed hover:bg-red-700 text-white rounded-2xl font-semibold text-sm transition-all shadow-lg shadow-red-600/30 flex items-center gap-2">
+                                Mulai Eksplorasi →
                             </button>
-                            <button onclick="showPage('videos')" class="bg-white/10 hover:bg-white/20 text-white font-bold px-6 py-3.5 rounded-2xl border border-white/20 transition flex items-center space-x-2 text-sm">
-                                <span>🎬 Tonton Video Edukasi</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Statistics Cards -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 card-shadow flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-red-100 text-nationalRed rounded-2xl flex items-center justify-center text-xl font-bold">🏛️</div>
-                        <div>
-                            <div class="text-2xl font-black text-nationalDark">10+</div>
-                            <div class="text-xs text-gray-500 font-semibold">Organisasi</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 card-shadow flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-red-100 text-nationalRed rounded-2xl flex items-center justify-center text-xl font-bold">🎬</div>
-                        <div>
-                            <div class="text-2xl font-black text-nationalDark">4</div>
-                            <div class="text-xs text-gray-500 font-semibold">Video Edukasi</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 card-shadow flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-red-100 text-nationalRed rounded-2xl flex items-center justify-center text-xl font-bold">📝</div>
-                        <div>
-                            <div class="text-2xl font-black text-nationalDark">20</div>
-                            <div class="text-xs text-gray-500 font-semibold">Soal Evaluasi</div>
-                        </div>
-                    </div>
-                    <div class="bg-white p-6 rounded-2xl border border-gray-200 card-shadow flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-red-100 text-nationalRed rounded-2xl flex items-center justify-center text-xl font-bold">🎮</div>
-                        <div>
-                            <div class="text-2xl font-black text-nationalDark">1</div>
-                            <div class="text-xs text-gray-500 font-semibold">Game Interaktif</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Quick Access Grid -->
-                <div class="space-y-4">
-                    <h3 class="text-xl font-black text-nationalDark">Mulai Belajar</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4">
-                            <div>
-                                <div class="text-3xl mb-2">⏳</div>
-                                <h4 class="text-lg font-black text-nationalDark">Jejak Sejarah</h4>
-                                <p class="text-gray-600 text-sm mt-1">“Telusuri perkembangan pergerakan nasional.”</p>
-                            </div>
-                            <button onclick="showPage('timeline')" class="self-start bg-nationalCreamCard hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold px-5 py-2.5 rounded-xl text-xs border border-gray-200 transition">
-                                Jelajahi →
-                            </button>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4">
-                            <div>
-                                <div class="text-3xl mb-2">🎬</div>
-                                <h4 class="text-lg font-black text-nationalDark">Video Edukasi</h4>
-                                <p class="text-gray-600 text-sm mt-1">“Belajar sejarah melalui visual & cerita.”</p>
-                            </div>
-                            <button onclick="showPage('videos')" class="self-start bg-nationalCreamCard hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold px-5 py-2.5 rounded-xl text-xs border border-gray-200 transition">
+                            <button onclick="switchPage('videos')" class="px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl font-semibold text-sm transition-all backdrop-blur-sm flex items-center gap-2">
                                 Tonton Video →
                             </button>
                         </div>
-                        <div class="bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4">
-                            <div>
-                                <div class="text-3xl mb-2">📚</div>
-                                <h4 class="text-lg font-black text-nationalDark">Materi Organisasi</h4>
-                                <p class="text-gray-600 text-sm mt-1">“Pelajari organisasi dan tokoh penting.”</p>
-                            </div>
-                            <button onclick="showPage('materials')" class="self-start bg-nationalCreamCard hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold px-5 py-2.5 rounded-xl text-xs border border-gray-200 transition">
-                                Buka Materi →
-                            </button>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4">
-                            <div>
-                                <div class="text-3xl mb-2">🎮</div>
-                                <h4 class="text-lg font-black text-nationalDark">Memory Match Game</h4>
-                                <p class="text-gray-600 text-sm mt-1">“Uji ingatanmu melalui permainan.”</p>
-                            </div>
-                            <button onclick="showPage('game')" class="self-start bg-nationalCreamCard hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold px-5 py-2.5 rounded-xl text-xs border border-gray-200 transition">
-                                Mainkan →
-                            </button>
-                        </div>
-                        <div class="bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4">
-                            <div>
-                                <div class="text-3xl mb-2">📝</div>
-                                <h4 class="text-lg font-black text-nationalDark">Evaluasi Akhir</h4>
-                                <p class="text-gray-600 text-sm mt-1">“Uji pemahamanmu dengan 20 soal.”</p>
-                            </div>
-                            <button onclick="showPage('evaluation')" class="self-start bg-nationalCreamCard hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold px-5 py-2.5 rounded-xl text-xs border border-gray-200 transition">
-                                Mulai Evaluasi →
-                            </button>
-                        </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- 2. TIMELINE PAGE -->
-            <section id="page-timeline" class="page-section animate-fade-in space-y-6">
+                <!-- 4 Statistik -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm flex flex-col items-center text-center es-card">
+                        <span class="text-3xl mb-1">🏛️</span>
+                        <h3 class="text-2xl font-bold text-stone-900">10+</h3>
+                        <p class="text-xs text-stone-500 font-medium mt-1">Organisasi</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm flex flex-col items-center text-center es-card">
+                        <span class="text-3xl mb-1">⏳</span>
+                        <h3 class="text-2xl font-bold text-stone-900">8</h3>
+                        <p class="text-xs text-stone-500 font-medium mt-1">Peristiwa</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm flex flex-col items-center text-center es-card">
+                        <span class="text-3xl mb-1">🎬</span>
+                        <h3 class="text-2xl font-bold text-stone-900">4</h3>
+                        <p class="text-xs text-stone-500 font-medium mt-1">Video Edukasi</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm flex flex-col items-center text-center es-card">
+                        <span class="text-3xl mb-1">📝</span>
+                        <h3 class="text-2xl font-bold text-stone-900">20</h3>
+                        <p class="text-xs text-stone-500 font-medium mt-1">Soal Evaluasi</p>
+                    </div>
+                </div>
+
+                <!-- 4 Quick-Access Cards -->
                 <div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">Jejak Pergerakan Nasional</h2>
-                    <p class="text-gray-600 text-sm mt-1">“Telusuri perjalanan organisasi dan peristiwa penting dalam perkembangan nasionalisme Indonesia.”</p>
+                    <h3 class="font-bold text-lg text-stone-900 mb-4">Akses Cepat</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div onclick="switchPage('timeline')" class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm cursor-pointer es-card group">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">⏳</div>
+                            <h4 class="font-bold text-stone-900 mb-1">Jejak Sejarah</h4>
+                            <p class="text-xs text-stone-500">Sistem satu peristiwa interaktif dari Budi Utomo hingga Sumpah Pemuda.</p>
+                        </div>
+                        <div onclick="switchPage('videos')" class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm cursor-pointer es-card group">
+                            <div class="w-12 h-12 rounded-2xl bg-red-50 text-esRed flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">🎬</div>
+                            <h4 class="font-bold text-stone-900 mb-1">Video Edukasi</h4>
+                            <p class="text-xs text-stone-500">Tonton video visual lengkap dengan catatan belajar dan status progress.</p>
+                        </div>
+                        <div onclick="switchPage('materials')" class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm cursor-pointer es-card group">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">📚</div>
+                            <h4 class="font-bold text-stone-900 mb-1">Materi</h4>
+                            <p class="text-xs text-stone-500">Pelajari profil mendalam organisasi dan tokoh pergerakan nasional.</p>
+                        </div>
+                        <div onclick="switchPage('game')" class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm cursor-pointer es-card group">
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">🎮</div>
+                            <h4 class="font-bold text-stone-900 mb-1">Game</h4>
+                            <p class="text-xs text-stone-500">Uji daya ingat dengan permainan Memory Match organisasi dan tokoh.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. JEJAK SEJARAH VIEW -->
+            <div id="view-timeline" class="page-view max-w-4xl mx-auto space-y-6">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-semibold uppercase tracking-wider">Kronologi Pergerakan</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">Jejak Pergerakan Nasional</h2>
+                    <p class="text-stone-500 text-sm">“Telusuri perkembangan pergerakan nasional dari organisasi awal hingga Sumpah Pemuda.”</p>
                 </div>
 
-                <!-- Timeline Card Box -->
-                <div class="bg-white p-6 sm:p-10 rounded-3xl border border-gray-200 card-shadow space-y-8">
-                    <!-- Progress Dots -->
-                    <div class="flex items-center justify-center space-x-1 sm:space-x-3 overflow-x-auto py-2" id="timeline-dots">
-                        <!-- Injected via JS -->
+                <!-- One-Event-At-A-Time Card Container -->
+                <div class="bg-white rounded-3xl border border-stone-200/80 shadow-md p-6 sm:p-10 relative overflow-hidden transition-all">
+                    <div id="timeline-card-content" class="space-y-6">
+                        <!-- Dynamic JavaScript injection -->
                     </div>
 
-                    <!-- Active Timeline Card Content -->
-                    <div id="timeline-card-content" class="bg-nationalCream p-6 sm:p-8 rounded-2xl border border-gray-200 space-y-6 transition-all duration-300">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <span id="tl-year" class="bg-nationalRed text-white text-xs font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider w-max">1908</span>
-                            <span id="tl-category" class="text-xs font-bold text-gray-500 uppercase tracking-widest">Era Perintisan</span>
-                        </div>
-                        
-                        <div>
-                            <h3 id="tl-title" class="text-2xl sm:text-3xl font-black text-nationalDark">Budi Utomo</h3>
-                            <div class="mt-4 space-y-3">
-                                <div>
-                                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">Informasi Peristiwa:</h4>
-                                    <p id="tl-info" class="text-gray-700 text-base leading-relaxed mt-1">Budi Utomo berdiri pada 20 Mei 1908 dan sering dipandang sebagai salah satu tonggak awal kebangkitan organisasi modern di Indonesia.</p>
-                                </div>
-                                <div class="pt-2">
-                                    <h4 class="text-xs font-bold uppercase tracking-wider text-nationalRed">Tokoh Terkait:</h4>
-                                    <p id="tl-tokoh" class="text-nationalDark font-bold text-sm mt-0.5">dr. Soetomo dan para pelajar STOVIA.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="pt-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                            <span id="tl-counter" class="text-xs font-bold text-gray-500">1 / 8</span>
-                            <button id="tl-learn-btn" onclick="openMaterialFromTimeline()" class="bg-nationalDark hover:bg-black text-white font-bold px-6 py-3 rounded-xl text-xs shadow transition flex items-center space-x-2">
-                                <span>Pelajari Materi Organisasi</span>
-                                <span>→</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Navigation Controls -->
-                    <div class="flex justify-between items-center pt-2">
-                        <button onclick="prevTimeline()" class="bg-nationalCream hover:bg-gray-200 text-nationalDark font-bold px-5 py-3 rounded-xl text-xs border border-gray-200 transition flex items-center space-x-2">
-                            <span>← Sebelumnya</span>
+                    <!-- Navigation controls -->
+                    <div class="flex items-center justify-between pt-8 mt-8 border-t border-stone-100">
+                        <button onclick="prevTimelineEvent()" id="timeline-prev-btn" class="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-sm rounded-2xl transition-all flex items-center gap-2">
+                            ← Sebelumnya
                         </button>
-                        <button onclick="nextTimeline()" class="bg-nationalRed hover:bg-nationalDarkRed text-white font-bold px-6 py-3 rounded-xl text-xs shadow transition flex items-center space-x-2">
-                            <span>Berikutnya →</span>
+                        <span id="timeline-counter" class="text-xs font-bold text-stone-500 uppercase tracking-widest">1 / 8</span>
+                        <button onclick="nextTimelineEvent()" id="timeline-next-btn" class="px-5 py-2.5 bg-esRed hover:bg-red-700 text-white font-semibold text-sm rounded-2xl transition-all flex items-center gap-2 shadow-md shadow-red-500/20">
+                            Berikutnya →
                         </button>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <!-- 3. VIDEO EDUKASI PAGE (NEW) -->
-            <section id="page-videos" class="page-section animate-fade-in space-y-6">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">🎬 Video Edukasi Pergerakan Nasional</h2>
-                        <p class="text-gray-600 text-sm mt-1">“Pelajari Pergerakan Nasional Indonesia melalui video edukatif yang ringkas dan mudah dipahami.”</p>
-                    </div>
-                    <!-- Video Progress Badge -->
-                    <div class="bg-white p-3 rounded-2xl border border-gray-200 card-shadow flex items-center space-x-3 w-max">
-                        <div class="text-xs font-bold text-gray-500">Progress Video: <span id="video-progress-count" class="text-nationalRed font-black">0 / 0</span></div>
-                        <div class="w-24 bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                            <div id="video-progress-bar" class="bg-nationalRed h-full transition-all duration-300" style="width: 0%"></div>
-                        </div>
-                    </div>
+            <!-- 3. VIDEO EDUKASI VIEW -->
+            <div id="view-videos" class="page-view max-w-6xl mx-auto space-y-8">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-semibold uppercase tracking-wider">Media Visual</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">Video Edukasi</h2>
+                    <p class="text-stone-500 text-sm">“Pelajari Pergerakan Nasional Indonesia melalui video edukatif yang singkat, visual, dan mudah dipahami.”</p>
                 </div>
 
-                <!-- DAFTAR VIDEO YANG DIBUTUHKAN (CHECKLIST) -->
-                <div class="bg-amber-50 border border-amber-200 p-6 rounded-3xl space-y-4">
-                    <div class="flex items-center space-x-3">
-                        <div class="text-2xl">📋</div>
+                <!-- Video Progress Banner -->
+                <div class="bg-white p-5 rounded-3xl border border-stone-200/80 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-2xl bg-red-50 text-esRed flex items-center justify-center font-bold text-lg">🎬</div>
                         <div>
-                            <h3 class="font-black text-amber-900 text-base">Daftar File Video yang Perlu Disiapkan</h3>
-                            <p class="text-xs text-amber-700">Simpan file video dengan format <code class="bg-white px-2 py-0.5 rounded font-bold text-nationalRed">.mp4</code> ke dalam folder <code class="bg-white px-2 py-0.5 rounded font-bold text-nationalRed">videos/</code> sesuai nama file di bawah ini:</p>
+                            <h4 class="font-bold text-sm text-stone-900">Progress Video Pembelajaran</h4>
+                            <p id="video-progress-count" class="text-xs text-stone-500">0 / 4 video selesai</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="required-videos-checklist">
-                        <!-- Injected via JS -->
+                    <div class="w-full sm:w-64 bg-stone-200 rounded-full h-3 overflow-hidden">
+                        <div id="video-progress-bar" class="bg-esRed h-full rounded-full transition-all duration-500" style="width: 0%"></div>
                     </div>
                 </div>
 
-                <!-- Main Video Box -->
-                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 card-shadow space-y-6">
-                    <div class="relative w-full bg-black rounded-2xl overflow-hidden aspect-video shadow-lg flex items-center justify-center">
-                        <!-- HTML5 Video Player with Offline Fallback -->
-                        <video id="main-video-player" class="w-full h-full object-cover" controls onended="onVideoEnded()">
-                            <source id="main-video-source" src="" type="video/mp4">
-                            Browser Anda tidak mendukung pemutaran video HTML5.
+                <!-- Main Active Video Player -->
+                <div class="bg-white rounded-3xl border border-stone-200/80 shadow-md overflow-hidden p-6 sm:p-8 space-y-6">
+                    <div class="relative w-full aspect-video bg-stone-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center">
+                        <video id="main-video-player" class="w-full h-full object-cover" controls onended="handleVideoEnded()">
+                            Your browser does not support the video tag.
                         </video>
-                        <!-- Fallback overlay if video file missing -->
-                        <div id="video-offline-fallback" class="absolute inset-0 bg-gray-900 text-white flex flex-col items-center justify-center p-6 text-center space-y-3 hidden">
-                            <div class="text-4xl">⚠️</div>
-                            <h4 class="text-lg font-bold">Video belum tersedia</h4>
-                            <p class="text-xs text-gray-400 max-w-sm">File video belum ditemukan di folder <code class="bg-gray-800 text-red-400 px-2 py-0.5 rounded">videos/</code>. Pastikan file .mp4 sudah diletakkan sesuai nama file pada data.</p>
-                            <label class="bg-nationalRed hover:bg-nationalDarkRed text-white text-xs font-bold px-4 py-2.5 rounded-xl cursor-pointer shadow transition">
-                                Pilih File Video Lokal (.mp4)
-                                <input type="file" accept="video/*" onchange="loadLocalVideoFile(this)" class="hidden">
-                            </label>
+                        <div id="video-fallback-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-stone-900/90 text-white p-6 text-center hidden">
+                            <span class="text-4xl mb-2">🎬</span>
+                            <h4 class="font-bold text-lg mb-1">Video Belum Tersedia</h4>
+                            <p class="text-xs text-stone-400 max-w-md">“Tambahkan file video ke folder videos untuk memutar video ini atau gunakan tombol putar di bawah.”</p>
                         </div>
                     </div>
 
-                    <!-- Video Information Panel -->
-                    <div class="space-y-4">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div class="flex items-center space-x-2">
-                                <span id="main-vid-category" class="bg-red-100 text-nationalRed text-xs font-bold px-3 py-1 rounded-full">Pengantar</span>
-                                <span id="main-vid-duration" class="text-xs font-semibold text-gray-500">⏱️ 00:00</span>
-                                <span id="main-vid-status" class="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">Belum ditonton</span>
-                            </div>
-                            <button onclick="toggleWatchStatus()" id="btn-toggle-watch" class="bg-nationalCream hover:bg-gray-200 text-nationalDark font-bold px-4 py-2 rounded-xl text-xs border border-gray-200 transition">
-                                Tandai Selesai ✓
-                            </button>
-                        </div>
-
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-100">
                         <div>
-                            <h3 id="main-vid-title" class="text-xl sm:text-2xl font-black text-nationalDark">Judul Video</h3>
-                            <p id="main-vid-desc" class="text-gray-600 text-sm mt-2 leading-relaxed">Deskripsi video akan muncul di sini.</p>
-                        </div>
-
-                        <!-- Related Materials & Action -->
-                        <div class="pt-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-                            <div class="flex items-center space-x-2 text-xs font-bold text-gray-500 w-full sm:w-auto">
-                                <span>Materi terkait:</span>
-                                <div id="main-vid-related" class="flex flex-wrap gap-1.5">
-                                    <button onclick="showPage('materials')" class="bg-nationalCream hover:bg-red-50 hover:text-nationalRed text-nationalDark px-3 py-1.5 rounded-lg border border-gray-200 transition">Materi Organisasi</button>
-                                </div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span id="main-video-category" class="px-2.5 py-0.5 bg-red-50 text-esRed rounded-full text-xs font-semibold">Pengantar</span>
+                                <span id="main-video-duration" class="text-xs text-stone-400 font-medium">05:30</span>
+                                <span id="main-video-status-badge" class="px-2.5 py-0.5 bg-stone-100 text-stone-600 rounded-full text-xs font-semibold">Belum ditonton</span>
                             </div>
-                            <button id="btn-next-material" onclick="jumpToRelatedMaterial()" class="w-full sm:w-auto bg-nationalRed hover:bg-nationalDarkRed text-white font-bold px-6 py-3 rounded-xl text-xs shadow transition flex items-center justify-center space-x-2">
-                                <span>Buka Materi Organisasi →</span>
-                            </button>
+                            <h3 id="main-video-title" class="text-xl font-bold text-stone-900">Pergerakan Nasional Indonesia</h3>
                         </div>
-                    </div>
-
-                    <!-- Catatan Belajar (Notes Feature) -->
-                    <div class="bg-nationalCream p-6 rounded-2xl border border-gray-200 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <h4 class="text-sm font-black text-nationalDark flex items-center space-x-2">
-                                <span>📝 Catatan Belajar</span>
-                            </h4>
-                            <span id="note-saved-status" class="text-[10px] text-green-600 font-bold hidden">Tersimpan di LocalStorage ✓</span>
-                        </div>
-                        <p class="text-xs text-gray-600">Apa yang kamu pelajari dari video ini? Tulis catatanmu di bawah:</p>
-                        <textarea id="video-note-input" oninput="saveVideoNote()" placeholder="Tulis ringkasan atau poin penting video di sini..." class="w-full h-24 p-3 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:outline-none focus:border-nationalRed"></textarea>
-                    </div>
-                </div>
-
-                <!-- Video Playlist & Filters Section -->
-                <div class="space-y-4">
-                    <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl border border-gray-200 card-shadow">
-                        <div class="relative w-full md:w-80">
-                            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-                            <input type="text" id="search-video" oninput="filterVideos()" placeholder="Cari judul atau deskripsi..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-nationalRed">
-                        </div>
-                        <div class="flex flex-wrap gap-1.5 w-full md:w-auto" id="video-filter-buttons">
-                            <button onclick="setVideoFilter('Semua')" class="v-filter-btn active-v-filter px-3.5 py-1.5 rounded-xl text-xs font-bold bg-nationalRed text-white transition">Semua</button>
-                            <button onclick="setVideoFilter('Pengantar')" class="v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Pengantar</button>
-                            <button onclick="setVideoFilter('Organisasi')" class="v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Organisasi</button>
-                            <button onclick="setVideoFilter('Tokoh')" class="v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Tokoh</button>
-                            <button onclick="setVideoFilter('Peristiwa')" class="v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Peristiwa</button>
-                        </div>
-                    </div>
-
-                    <!-- Video Cards Grid -->
-                    <div id="video-playlist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- 4. MATERIALS PAGE -->
-            <section id="page-materials" class="page-section animate-fade-in space-y-6">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">Materi Organisasi Pergerakan</h2>
-                    <p class="text-gray-600 text-sm mt-1">“Pelajari karakteristik, asas, dan peran setiap organisasi dalam pergerakan nasional.”</p>
-                </div>
-
-                <!-- Search & Filters -->
-                <div class="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-2xl border border-gray-200 card-shadow">
-                    <div class="relative w-full md:w-80">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-                        <input type="text" id="search-org" oninput="filterOrganizations()" placeholder="Cari organisasi atau tokoh..." class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-nationalRed">
-                    </div>
-                    <div class="flex flex-wrap gap-1.5 w-full md:w-auto" id="filter-buttons">
-                        <button onclick="setFilter('Semua')" class="filter-btn active-filter px-3.5 py-1.5 rounded-xl text-xs font-bold bg-nationalRed text-white transition">Semua</button>
-                        <button onclick="setFilter('Politik')" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Politik</button>
-                        <button onclick="setFilter('Sosial & Agama')" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Sosial & Agama</button>
-                        <button onclick="setFilter('Pendidikan')" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Pendidikan</button>
-                        <button onclick="setFilter('Pemuda')" class="filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition">Pemuda</button>
-                    </div>
-                </div>
-
-                <!-- Organization Cards Grid -->
-                <div id="org-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <!-- Injected via JS -->
-                </div>
-            </section>
-
-            <!-- 5. GAME PAGE -->
-            <section id="page-game" class="page-section animate-fade-in space-y-6">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">🎮 Memory Match: Pasangkan Organisasi</h2>
-                    <p class="text-gray-600 text-sm mt-1">“Uji ingatanmu dengan mencocokkan kartu nama organisasi dengan tokoh utamanya.”</p>
-                </div>
-
-                <!-- Game Container -->
-                <div class="bg-white p-6 sm:p-8 rounded-3xl border border-gray-200 card-shadow space-y-6">
-                    <!-- Scoreboard -->
-                    <div class="flex flex-col sm:flex-row justify-between items-center bg-nationalCream p-4 rounded-2xl border border-gray-200 gap-4 text-xs sm:text-sm font-bold">
-                        <div class="flex items-center space-x-6">
-                            <div>Skor: <span id="game-score" class="text-nationalRed text-base">0</span> / 6</div>
-                            <div>Percobaan: <span id="game-tries" class="text-nationalDark text-base">0</span></div>
-                            <div>Waktu: <span id="game-timer" class="text-nationalDark text-base">00:00</span></div>
-                        </div>
-                        <button onclick="startMemoryGame()" class="bg-nationalRed hover:bg-nationalDarkRed text-white font-bold px-5 py-2.5 rounded-xl shadow transition">
-                            🔄 Mulai / Ulangi Game
+                        <button id="related-material-btn" onclick="openMaterialFromVideo()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all flex items-center gap-2 self-start sm:self-auto">
+                            Pelajari Materi Terkait →
                         </button>
                     </div>
 
-                    <!-- Cards Board -->
-                    <div id="memory-board" class="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 min-h-[320px] items-center justify-center">
-                        <div class="col-span-full text-center py-20 text-gray-400 font-semibold text-sm">
-                            Klik tombol <strong>Mulai / Ulangi Game</strong> di atas untuk memulai permainan!
+                    <p id="main-video-desc" class="text-sm text-stone-600 leading-relaxed">Mengenal perkembangan Pergerakan Nasional Indonesia.</p>
+
+                    <!-- Catatan Belajar -->
+                    <div class="bg-stone-50 p-5 rounded-2xl border border-stone-200/60 space-y-3">
+                        <h4 class="font-bold text-sm text-stone-900 flex items-center gap-2">
+                            <span>📝</span> Catatan Belajar
+                        </h4>
+                        <textarea id="video-notes-input" placeholder="Apa yang kamu pelajari dari video ini?" class="w-full p-3 bg-white border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-esRed/50 resize-none h-24"></textarea>
+                        <div class="flex justify-end">
+                            <button onclick="saveVideoNotes()" class="px-4 py-2 bg-esRed hover:bg-red-700 text-white font-semibold text-xs rounded-xl transition-all shadow-sm">
+                                Simpan Catatan
+                            </button>
                         </div>
                     </div>
                 </div>
-            </section>
 
-            <!-- 6. EVALUASI PAGE -->
-            <section id="page-evaluation" class="page-section animate-fade-in space-y-6">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">📝 Evaluasi Akhir Siswa SMA</h2>
-                    <p class="text-gray-600 text-sm mt-1">“Uji pemahaman menyeluruhmu melalui 20 soal pilihan ganda.”</p>
+                <!-- Search and Filters -->
+                <div class="space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute left-3.5 top-3 text-stone-400">🔍</span>
+                            <input type="text" id="video-search-input" oninput="filterVideos()" placeholder="Cari video berdasarkan judul, kategori, tokoh..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-esRed/50">
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 w-full sm:w-auto" id="video-filter-buttons">
+                            <button onclick="setVideoFilter('Semua')" class="video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-esRed text-white transition-all">Semua</button>
+                            <button onclick="setVideoFilter('Pengantar')" class="video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Pengantar</button>
+                            <button onclick="setVideoFilter('Organisasi')" class="video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Organisasi</button>
+                            <button onclick="setVideoFilter('Peristiwa')" class="video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Peristiwa</button>
+                        </div>
+                    </div>
+
+                    <!-- Video Playlist Cards Grid -->
+                    <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Dynamic generated cards -->
+                    </div>
+                    <div id="video-not-found" class="hidden text-center py-12 text-stone-400 text-sm font-medium">
+                        Video tidak ditemukan.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. MATERI VIEW -->
+            <div id="view-materials" class="page-view max-w-6xl mx-auto space-y-6">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-semibold uppercase tracking-wider">Pustaka Organisasi</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">Organisasi Pergerakan Nasional</h2>
+                    <p class="text-stone-500 text-sm">“Pelajari profil mendalam organisasi dan tokoh penting dalam pergerakan nasional.”</p>
+                </div>
+
+                <!-- Search and Filters -->
+                <div class="space-y-4">
+                    <div class="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                        <div class="relative w-full sm:w-80">
+                            <span class="absolute left-3.5 top-3 text-stone-400">🔍</span>
+                            <input type="text" id="material-search-input" oninput="filterMaterials()" placeholder="Cari organisasi..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200 rounded-2xl text-sm focus:outline-none focus:ring-2 focus:ring-esRed/50">
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 w-full sm:w-auto" id="material-filter-buttons">
+                            <button onclick="setMaterialFilter('Semua')" class="material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-esRed text-white transition-all">Semua</button>
+                            <button onclick="setMaterialFilter('Politik')" class="material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Politik</button>
+                            <button onclick="setMaterialFilter('Sosial')" class="material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Sosial</button>
+                            <button onclick="setMaterialFilter('Pendidikan')" class="material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Pendidikan</button>
+                            <button onclick="setMaterialFilter('Pemuda')" class="material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all">Pemuda</button>
+                        </div>
+                    </div>
+
+                    <!-- Material Cards Grid -->
+                    <div id="material-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Dynamic generated cards -->
+                    </div>
+                    <div id="material-not-found" class="hidden text-center py-12 text-stone-400 text-sm font-medium">
+                        Organisasi tidak ditemukan.
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. GAME VIEW -->
+            <div id="view-game" class="page-view max-w-4xl mx-auto space-y-6">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-semibold uppercase tracking-wider">Mini Game Edukasi</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">Memory Match Organisasi & Tokoh</h2>
+                    <p class="text-stone-500 text-sm">“Pasangkan organisasi pergerakan nasional dengan tokoh pendirinya dengan tepat!”</p>
+                </div>
+
+                <!-- Game Stats Bar -->
+                <div class="bg-white p-5 rounded-3xl border border-stone-200/80 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-6">
+                        <div>
+                            <span class="text-xs text-stone-400 font-medium block">Percobaan</span>
+                            <span id="game-attempts" class="font-bold text-lg text-stone-900">0</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-stone-400 font-medium block">Pasangan</span>
+                            <span id="game-matches" class="font-bold text-lg text-esRed">0 / 6</span>
+                        </div>
+                        <div>
+                            <span class="text-xs text-stone-400 font-medium block">Waktu</span>
+                            <span id="game-timer" class="font-bold text-lg text-stone-900">00:00</span>
+                        </div>
+                    </div>
+                    <button onclick="initGame()" class="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all flex items-center gap-2">
+                        🔄 Reset Game
+                    </button>
+                </div>
+
+                <!-- Game Cards Grid (12 Cards) -->
+                <div id="game-board" class="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <!-- Dynamic cards -->
+                </div>
+
+                <!-- Game Complete Modal Overlay inside view -->
+                <div id="game-win-banner" class="hidden bg-emerald-50 border border-emerald-200 p-6 rounded-3xl text-center space-y-4 shadow-sm">
+                    <span class="text-4xl">🎉</span>
+                    <h3 class="text-xl font-bold text-emerald-900">Permainan Selesai!</h3>
+                    <p id="game-win-stats" class="text-sm text-emerald-700">Kamu berhasil menyelesaikan permainan dalam waktu 00:45 dengan 12 percobaan.</p>
+                    <div class="flex justify-center gap-3 pt-2">
+                        <button onclick="initGame()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-2xl transition-all shadow-md">
+                            Coba Lagi
+                        </button>
+                        <button onclick="switchPage('evaluation')" class="px-5 py-2.5 bg-esRed hover:bg-red-700 text-white font-semibold text-xs rounded-2xl transition-all shadow-md">
+                            Lanjut ke Evaluasi →
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. EVALUASI VIEW -->
+            <div id="view-evaluation" class="page-view max-w-3xl mx-auto space-y-6">
+                <div class="text-center max-w-xl mx-auto space-y-2">
+                    <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-semibold uppercase tracking-wider">Uji Kompetensi</span>
+                    <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">Evaluasi Pembelajaran</h2>
+                    <p class="text-stone-500 text-sm">“Uji pemahamanmu mengenai materi Pergerakan Nasional Indonesia melalui 20 soal pilihan ganda.”</p>
                 </div>
 
                 <!-- Quiz Container -->
-                <div id="quiz-box" class="bg-white p-6 sm:p-10 rounded-3xl border border-gray-200 card-shadow space-y-6">
-                    <!-- Progress Bar Quiz -->
-                    <div class="flex justify-between items-center text-xs font-bold text-gray-500 border-b border-gray-100 pb-4">
-                        <span id="quiz-progress-label">Soal 1 dari 20</span>
-                        <span class="text-nationalRed">Bobot: 5 Poin / Soal</span>
-                    </div>
-
-                    <!-- Question Card -->
-                    <div class="space-y-4">
-                        <h3 id="quiz-question-text" class="text-lg sm:text-xl font-bold text-nationalDark">
-                            Pertanyaan akan dimuat...
-                        </h3>
-                        <div id="quiz-options-list" class="space-y-3 pt-2">
-                            <!-- Options injected via JS -->
+                <div id="quiz-container" class="bg-white rounded-3xl border border-stone-200/80 shadow-md p-6 sm:p-10 space-y-6">
+                    <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+                        <span id="quiz-counter" class="text-xs font-bold text-esRed uppercase tracking-widest">PERTANYAAN 01 / 20</span>
+                        <div class="w-32 bg-stone-200 rounded-full h-2 overflow-hidden">
+                            <div id="quiz-progress-bar" class="bg-esRed h-full transition-all duration-300 rounded-full" style="width: 5%"></div>
                         </div>
                     </div>
 
-                    <!-- Feedback & Navigation -->
-                    <div class="pt-6 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <div id="quiz-feedback" class="text-sm font-bold"></div>
-                        <button id="quiz-submit-btn" onclick="submitQuizAnswer()" class="w-full sm:w-auto bg-nationalRed hover:bg-nationalDarkRed text-white font-bold px-8 py-3.5 rounded-xl shadow transition text-xs">
-                            Jawab & Lanjut →
+                    <h3 id="quiz-question" class="text-lg sm:text-xl font-bold text-stone-900 leading-snug">
+                        <!-- Question text -->
+                    </h3>
+
+                    <div id="quiz-options" class="space-y-3">
+                        <!-- Option buttons -->
+                    </div>
+
+                    <div id="quiz-feedback" class="hidden p-4 rounded-2xl text-sm font-medium">
+                        <!-- Feedback message -->
+                    </div>
+
+                    <div class="flex justify-end pt-4 border-t border-stone-100">
+                        <button id="quiz-next-btn" onclick="nextQuizQuestion()" class="hidden px-6 py-3 bg-esRed hover:bg-red-700 text-white font-semibold text-sm rounded-2xl transition-all shadow-md shadow-red-500/20">
+                            Soal Berikutnya →
                         </button>
                     </div>
                 </div>
 
-                <!-- Results Box (Hidden Initially) -->
-                <div id="quiz-results-box" class="hidden bg-white p-8 sm:p-10 rounded-3xl border border-gray-200 card-shadow text-center space-y-6 animate-fade-in">
-                    <!-- Populated via JS -->
-                </div>
-            </section>
+                <!-- Result Screen -->
+                <div id="quiz-result-card" class="hidden bg-white rounded-3xl border border-stone-200/80 shadow-md p-8 sm:p-12 text-center space-y-6">
+                    <div class="w-20 h-20 bg-red-50 text-esRed rounded-3xl mx-auto flex items-center justify-center text-3xl font-bold shadow-sm">
+                        🎓
+                    </div>
+                    <div>
+                        <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-semibold uppercase tracking-wider">Hasil Evaluasi</span>
+                        <h3 class="text-2xl font-bold text-stone-900 mt-2">EVALUASI SELESAI</h3>
+                    </div>
 
-            <!-- 7. ABOUT PAGE -->
-            <section id="page-about" class="page-section animate-fade-in space-y-6">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-nationalDark">Tentang EsHist</h2>
-                    <p class="text-gray-600 text-sm mt-1">Informasi latar belakang aplikasi pembelajaran sejarah interaktif.</p>
-                </div>
+                    <div class="flex justify-center items-center gap-8 py-4">
+                        <div class="text-center">
+                            <span class="text-3xl font-bold text-esRed" id="result-score">85</span>
+                            <span class="text-xs text-stone-400 block font-medium mt-1">Nilai Akhir</span>
+                        </div>
+                        <div class="w-px h-12 bg-stone-200"></div>
+                        <div class="text-center">
+                            <span class="text-3xl font-bold text-emerald-600" id="result-correct">17</span>
+                            <span class="text-xs text-stone-400 block font-medium mt-1">Benar</span>
+                        </div>
+                        <div class="w-px h-12 bg-stone-200"></div>
+                        <div class="text-center">
+                            <span class="text-3xl font-bold text-red-500" id="result-wrong">3</span>
+                            <span class="text-xs text-stone-400 block font-medium mt-1">Salah</span>
+                        </div>
+                    </div>
 
-                <div class="bg-white p-8 sm:p-10 rounded-3xl border border-gray-200 card-shadow space-y-6">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-14 h-14 bg-nationalRed rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-md">
-                            📚
+                    <p id="result-feedback-text" class="text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+                        Luar biasa! Pemahamanmu tentang sejarah pergerakan nasional sudah sangat baik. Pertahankan prestasimu!
+                    </p>
+
+                    <div class="flex flex-wrap justify-center gap-3 pt-4">
+                        <button onclick="restartEvaluation()" class="px-5 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-2xl transition-all">
+                            Ulangi Evaluasi
+                        </button>
+                        <button onclick="switchPage('materials')" class="px-5 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-2xl transition-all">
+                            Pelajari Materi Lagi
+                        </button>
+                        <button onclick="switchPage('home')" class="px-5 py-3 bg-esRed hover:bg-red-700 text-white font-semibold text-xs rounded-2xl transition-all shadow-md">
+                            Kembali ke Beranda
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. ABOUT VIEW -->
+            <div id="view-about" class="page-view max-w-3xl mx-auto space-y-6">
+                <div class="bg-white rounded-3xl border border-stone-200/80 shadow-md p-8 sm:p-12 space-y-6">
+                    <div class="flex items-center gap-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-esRed to-esDarkRed flex items-center justify-center text-white font-bold text-2xl shadow-md shadow-red-500/20">
+                            Es
                         </div>
                         <div>
-                            <h3 class="text-2xl font-black text-nationalDark">Es<span class="text-nationalRed">Hist</span></h3>
-                            <span class="text-xs text-gray-500 font-bold uppercase tracking-wider">Eksplorasi Sejarah Interaktif</span>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-4 text-sm text-gray-700 leading-relaxed border-t border-gray-100 pt-6">
-                        <p>
-                            <strong>EsHist</strong> merupakan media pembelajaran sejarah interaktif yang dirancang khusus untuk membantu siswa Sekolah Menengah Atas (SMA) memahami Pergerakan Nasional Indonesia secara mendalam dan menyenangkan.
-                        </p>
-                        <div class="bg-nationalCream p-5 rounded-2xl border border-gray-200 space-y-2">
-                            <h4 class="font-bold text-nationalDark">🎯 Tujuan Utama Pembelajaran:</h4>
-                            <p class="text-gray-600">
-                                Membuat pembelajaran sejarah lebih interaktif, mudah dipahami, dan mendorong siswa untuk aktif mengeksplorasi materi organisasi, video edukasi, peristiwa, serta tokoh-tokoh penting tanpa ketergantungan pada koneksi internet.
-                            </p>
+                            <h2 class="text-2xl font-bold text-stone-900">Tentang EsHist</h2>
+                            <p class="text-xs text-stone-500 font-medium">Eksplorasi Sejarah Interaktif • Versi 1.0</p>
                         </div>
                     </div>
 
-                    <div class="pt-4 text-xs text-gray-400 border-t border-gray-100 flex justify-between items-center">
-                        <span>EsHist | Eksplorasi Sejarah Interaktif</span>
-                        <span>&copy; 2026 EsHist</span>
+                    <div class="space-y-4 text-sm text-stone-600 leading-relaxed">
+                        <p>
+                            “EsHist merupakan media pembelajaran sejarah interaktif yang dirancang untuk membantu siswa memahami Pergerakan Nasional Indonesia melalui timeline, video edukasi, materi, permainan, dan evaluasi.”
+                        </p>
+                        <div class="bg-stone-50 p-6 rounded-2xl border border-stone-200/60 space-y-2">
+                            <h4 class="font-bold text-stone-900">Tujuan Pembelajaran</h4>
+                            <p class="text-stone-600">
+                                “Menghadirkan pengalaman belajar sejarah yang interaktif, visual, dan mudah dipahami oleh siswa SMA tanpa ketergantungan koneksi internet atau server eksternal.”
+                            </p>
+                        </div>
+                        <div class="pt-2">
+                            <h4 class="font-bold text-stone-900 mb-2">Fitur Utama EsHist:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-stone-600">
+                                <li>Sistem Navigasi Dashboard Satu Halaman (Single-Page Navigation)</li>
+                                <li>Jejak Sejarah Interaktif Satu Peristiwa (One-Event-At-A-Time)</li>
+                                <li>Video Edukasi Lengkap dengan Status Tontonan & Catatan Belajar</li>
+                                <li>Pustaka Organisasi Pergerakan dengan Filter & Modal Detail</li>
+                                <li>Mini Game Memory Match Organisasi dan Tokoh</li>
+                                <li>Evaluasi 20 Soal Pilihan Ganda dengan Penilaian Otomatis</li>
+                                <li>Sistem Progress Keseluruhan & Penyimpanan Offline (localStorage)</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </section>
+            </div>
 
         </div>
     </main>
 
-    <!-- Organization Detail Modal -->
-    <div id="org-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto animate-fade-in">
-            <button onclick="closeOrgModal()" class="absolute top-6 right-6 w-10 h-10 bg-gray-100 hover:bg-red-100 text-gray-500 hover:text-nationalRed rounded-full flex items-center justify-center font-bold transition">
+    <!-- MATERIAL DETAIL MODAL -->
+    <div id="material-modal" class="fixed inset-0 bg-stone-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8 space-y-6 relative">
+            <button onclick="closeMaterialModal()" class="absolute top-6 right-6 w-10 h-10 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 font-bold transition-all">
                 ✕
             </button>
-            <div id="modal-content" class="space-y-6">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Win Modal -->
-    <div id="game-win-modal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl text-center space-y-6 animate-fade-in">
-            <div class="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto text-3xl shadow-md">
-                🏆
-            </div>
-            <div>
-                <h3 class="text-2xl font-black text-nationalDark">Permainan Selesai!</h3>
-                <p id="game-win-stats" class="text-sm text-gray-600 mt-2">Semua kartu berhasil dipasangkan dengan luar biasa.</p>
-            </div>
-            <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                <button onclick="closeGameModal(); startMemoryGame();" class="flex-1 bg-nationalCream hover:bg-gray-200 text-nationalDark font-bold py-3 px-4 rounded-xl text-xs border border-gray-200 transition">
-                    Coba Lagi
-                </button>
-                <button onclick="closeGameModal(); showPage('evaluation');" class="flex-1 bg-nationalRed hover:bg-nationalDarkRed text-white font-bold py-3 px-4 rounded-xl text-xs shadow transition">
-                    Lanjut ke Evaluasi →
-                </button>
+            <div id="modal-content" class="space-y-4">
+                <!-- Dynamic modal content -->
             </div>
         </div>
     </div>
 
     <script>
-        // --- DATA REPOSITORY ---
+        // --- DATA STRUCTURES & CONFIGURATIONS ---
 
-        const timelineData = [
+        // 1. Timeline Data (8 Events)
+        const timelineEvents = [
             {
                 year: "1908",
-                category: "Era Perintisan",
                 title: "Budi Utomo",
-                info: "Budi Utomo berdiri pada 20 Mei 1908 dan sering dipandang sebagai salah satu tonggak awal kebangkitan organisasi modern di Indonesia.",
-                tokoh: "dr. Soetomo dan para pelajar STOVIA.",
-                orgId: "budi-utomo"
+                category: "Organisasi Modern Pertama",
+                description: "Didirikan oleh para mahasiswa STOVIA di Jakarta atas prakarsa Dr. Soetomo. Organisasi ini menandai kebangkitan kesadaran nasional bangsa Indonesia untuk berorganisasi secara modern.",
+                 tokoh: "Dr. Soetomo, Goenawan Mangoenkoesoemo, Soeradji",
+                icon: "🏛️"
             },
             {
                 year: "1911–1912",
-                category: "Era Perdagangan & Massa",
                 title: "Sarekat Islam",
-                info: "Sarekat Islam berkembang dari organisasi perdagangan menjadi organisasi massa yang memiliki pengaruh luas dalam kehidupan sosial dan politik masyarakat.",
-                tokoh: "H.O.S. Tjokroaminoto.",
-                orgId: "sarekat-islam"
+                category: "Gerakan Sosial & Ekonomi",
+                description: "Berawal dari Sarekat Dagang Islam yang didirikan oleh H. Samanhudi di Surakarta untuk melindungi pedagang pribumi. Kemudian bertransformasi menjadi Sarekat Islam di bawah H.O.S. Tjokroaminoto.",
+                tokoh: "H. Samanhudi, H.O.S. Tjokroaminoto",
+                icon: "📜"
             },
             {
                 year: "1912",
-                category: "Partai Politik Pertama",
                 title: "Indische Partij",
-                info: "Indische Partij didirikan oleh Tiga Serangkai dan menyuarakan gagasan persatuan penduduk Hindia serta perjuangan politik terhadap kolonialisme.",
-                tokoh: "Douwes Dekker, Ki Hadjar Dewantara, dan dr. Cipto Mangunkusumo.",
-                orgId: "indische-partij"
+                category: "Partai Politik Nasionalis",
+                description: "Partai politik pertama berhaluan nasionalis Hindia yang didirikan oleh Tiga Serangkai. Menuntut kemerdekaan Hindia Belanda dari kolonialisme secara terang-terangan.",
+                tokoh: "E.F.E. Douwes Dekker, Tjipto Mangoenkoesoemo, Ki Hadjar Dewantara",
+                icon: "⭐"
             },
             {
                 year: "1912",
-                category: "Gerakan Sosial & Keagamaan",
                 title: "Muhammadiyah",
-                info: "Muhammadiyah didirikan di Yogyakarta dan bergerak terutama dalam bidang pendidikan, sosial, dan keagamaan.",
-                tokoh: "K.H. Ahmad Dahlan.",
-                orgId: "muhammadiyah"
+                category: "Gerakan Sosial & Keagamaan",
+                description: "Didirikan oleh K.H. Ahmad Dahlan di Yogyakarta. Bergerak di bidang pendidikan, sosial, dan keagamaan untuk memajukan umat Islam dan bangsa Indonesia.",
+                tokoh: "K.H. Ahmad Dahlan",
+                icon: "📖"
             },
             {
                 year: "1922",
-                category: "Pendidikan Nasional",
                 title: "Taman Siswa",
-                info: "Taman Siswa didirikan sebagai gerakan pendidikan yang mengembangkan pendidikan bagi masyarakat pribumi serta menekankan kemandirian dan kebudayaan.",
-                tokoh: "Ki Hadjar Dewantara.",
-                orgId: "taman-siswa"
+                category: "Gerakan Pendidikan",
+                description: "Perguruan Nasional Taman Siswa didirikan oleh Ki Hadjar Dewantara di Yogyakarta. Menanamkan semangat nasionalisme dan pendidikan merdeka bagi pribumi.",
+                tokoh: "Ki Hadjar Dewantara",
+                icon: "🎓"
             },
             {
                 year: "1925",
-                category: "Pergerakan Luar Negeri",
                 title: "Perhimpunan Indonesia",
-                info: "Perhimpunan Indonesia berkembang di Belanda dan menjadi salah satu organisasi yang secara terbuka memperjuangkan gagasan kemerdekaan Indonesia.",
-                tokoh: "Mohammad Hatta dan tokoh mahasiswa Indonesia lainnya.",
-                orgId: "perhimpunan-indonesia"
+                category: "Gerakan Mahasiswa di Belanda",
+                description: "Organisasi mahasiswa pelajar Indonesia di negeri Belanda yang memperjuangkan kemerdekaan Indonesia di kancah internasional dan memelopori penggunaan nama 'Indonesia'.",
+                tokoh: "Mohammad Hatta, Iwa Kusuma Soemantri, Ali Sastroamidjojo",
+                icon: "🌍"
             },
             {
                 year: "1927",
-                category: "Partai Nasionalis",
                 title: "Partai Nasional Indonesia (PNI)",
-                info: "PNI didirikan di Bandung dan memperjuangkan kemerdekaan Indonesia melalui gagasan nasionalisme dan perjuangan politik.",
-                tokoh: "Ir. Soekarno.",
-                orgId: "pni"
+                category: "Partai Politik Radikal",
+                description: "Didirikan oleh Ir. Soekarno di Bandung dengan asas marhaenisme dan tujuan mencapai Indonesia merdeka secara non-kooperatif terhadap pemerintah kolonial.",
+                tokoh: "Ir. Soekarno, Mr. Iskaq Tjokrohadisurjo",
+                icon: "✊"
             },
             {
                 year: "1928",
-                category: "Puncak Persatuan",
                 title: "Sumpah Pemuda",
-                info: "Kongres Pemuda II menghasilkan ikrar yang menegaskan satu tanah air, satu bangsa, dan satu bahasa, yaitu Indonesia.",
-                tokoh: "Para pemuda dari berbagai organisasi kepemudaan.",
-                orgId: "sumpah-pemuda"
+                category: "Tonggak Persatuan Nasional",
+                description: "Kongres Pemuda II melahirkan ikrar monumental: Satu Nusa, Satu Bangsa, dan Menjunjung Bahasa Persatuan, Bahasa Indonesia. Menyatukan seluruh elemen pemuda Nusantara.",
+                tokoh: "Soegondo Djojopoesposo, Mohammad Yamin, Wage Rudolf Soepratman",
+                icon: "🇮🇩"
             }
         ];
 
-        // ==========================================
-        // TAMBAHKAN VIDEO BARU DI SINI
-        // ==========================================
+        // 2. Video Data (4 Videos)
+        // // TAMBAHKAN VIDEO BARU DI SINI
         const videos = [
             {
                 id: 1,
-                title: "Mengenal Pergerakan Nasional Indonesia",
+                title: "Pergerakan Nasional Indonesia",
                 category: "Pengantar",
-                duration: "07:04",
-                file: "https://youtu.be/-WdlE8EjR80?si=5NaYWj75Ezh4t_FP",
-                description: "Pengantar komprehensif mengenai latar belakang penjajahan kolonial, penderitaan rakyat, dan awal kesadaran nasional untuk merebut kemerdekaan."
+                duration: "05:30",
+                file: "videos/pergerakan-nasional.mp4",
+                description: "Mengenal perkembangan awal Pergerakan Nasional Indonesia, faktor pemicu dari dalam dan luar negeri, serta babak baru perjuangan bangsa."
             },
             {
                 id: 2,
                 title: "Budi Utomo dan Awal Kebangkitan Nasional",
                 category: "Organisasi",
-                duration: "06:57",
-                file: "https://youtu.be/BsncD-RLDJ0?si=3RrWCfLgtgqTS5FG",
-                description: "Membahas secara mendalam berdirinya Budi Utomo pada 20 Mei 1908 oleh dr. Soetomo dan para pelajar STOVIA sebagai tonggak kesadaran berorganisasi."
+                duration: "04:20",
+                file: "videos/budi-utomo.mp4",
+                description: "Kisah berdirinya Budi Utomo pada 20 Mei 1908 oleh para pelajar STOVIA yang menjadi tonggak Hari Kebangkitan Nasional."
             },
             {
                 id: 3,
                 title: "Organisasi Pergerakan Nasional",
                 category: "Organisasi",
                 duration: "06:10",
-                file: "https://youtu.be/BGMCaCwEdTE?si=yar1pv-3xlu-WRdd",
-                description: "Eksplorasi berbagai organisasi besar mulai dari Sarekat Islam, Indische Partij, hingga pergerakan radikal dan moderat di Hindia Belanda."
+                file: "videos/organisasi-pergerakan.mp4",
+                description: "Eksplorasi mendalam berbagai organisasi pergerakan dari Sarekat Islam, Indische Partij, Muhammadiyah, hingga PNI."
             },
             {
                 id: 4,
                 title: "Sumpah Pemuda 1928",
                 category: "Peristiwa",
-                duration: "02:52",
-                file: "https://youtu.be/DKbAb08tB30?si=hbUdVdKJue2TB3ns",
-                description: "Momen bersejarah Kongres Pemuda II yang melahirkan ikrar satu tanah air, satu bangsa, dan satu bahasa persatuan Indonesia."
-            },
-            {
-                id: 5,
-                title: "Sarekat Islam",
-                category: "Organisasi",
-                duration: "04:44",
-                file: "https://youtu.be/lHdteI0j7JI?si=Y5025FuviEhW5VLv",
-                description: "Mengenal perkembangan Sarekat Islam dalam Pergerakan Nasional Indonesia."
+                duration: "05:00",
+                file: "videos/sumpah-pemuda.mp4",
+                description: "Momen bersejarah Kongres Pemuda II yang melahirkan ikrar Sumpah Pemuda serta lagu kebangsaan Indonesia Raya."
             }
         ];
 
-        const organizationsData = [
+        // 3. Materials / Organizations Data (10 Organizations)
+        const materials = [
             {
                 id: "budi-utomo",
                 name: "Budi Utomo",
-                year: "1908",
                 category: "Pendidikan",
-                founder: "dr. Soetomo & para pelajar STOVIA",
-                focus: "Pendidikan, kebudayaan, dan sosial masyarakat.",
-                background: "Didirikan di Jakarta atas inspirasi dr. Wahidin Sudirohusodo untuk mengumpulkan dana pelajar guna membantu kaum muda pribumi yang cerdas.",
-                purpose: "Memajukan pengajaran, pertanian, perdagangan, teknik, industri, dan kebudayaan.",
-                role: "Menjadi pelopor berdirinya organisasi modern pertama di Indonesia yang membangkitkan kesadaran berorganisasi.",
-                fact: "Tanggal lahir Budi Utomo (20 Mei) diperingati sebagai Hari Kebangkitan Nasional."
+                year: "1908",
+                background: "Didirikan di Jakarta oleh para mahasiswa STOVIA atas dorongan Dr. Wahidin Soedirohoesodo yang berkeliling menggalang dana Beasiswa Fonds.",
+                tujuan: "Memajukan pengajaran dan kebudayaan bagi bangsa bumiputera.",
+                tokoh: "Dr. Soetomo, Dr. Wahidin Soedirohoesodo, Goenawan Mangoenkoesoemo",
+                peran: "Menjadi pelopor kebangkitan nasional dan mengubah bentuk perjuangan dari fisik menjadi organisasi modern.",
+                fakta: "Tanggal berdirinya Budi Utomo (20 Mei) kemudian ditetapkan sebagai Hari Kebangkitan Nasional."
             },
             {
                 id: "sarekat-islam",
-                name: "Sarekat Islam (SI)",
-                year: "1911–1912",
-                category: "Politik",
-                founder: "H. Samanhudi & H.O.S. Tjokroaminoto",
-                focus: "Perdagangan, ekonomi kerakyatan, dan pembelaan hak rakyat.",
-                background: "Bermula dari Sarekat Dagang Islam di Solo untuk melindungi pedagang batik pribumi dari persaingan asing.",
-                purpose: "Menumbuhkan jiwa berniaga dan menentang penindasan kolonial.",
-                role: "Menjadi organisasi massa pertama yang berhasil menghimpun jutaan anggota dari berbagai lapisan.",
-                fact: "H.O.S. Tjokroaminoto dikenal sebagai 'Raja Tanpa Mahkota' yang melahirkan banyak tokoh besar."
+                name: "Sarekat Islam",
+                category: "Ekonomi",
+                year: "1911",
+                background: "Transformasi dari Sarekat Dagang Islam yang didirikan H. Samanhudi di Surakarta untuk menghadapi dominasi pedagang asing.",
+                tujuan: "Melindungi kepentingan pedagang pribumi dan memajukan perekonomian Islam serta kemerdekaan bangsa.",
+                tokoh: "H. Samanhudi, H.O.S. Tjokroaminoto, Abdul Muis",
+                peran: "Menjadi organisasi massa terbesar pertama yang memiliki jutaan anggota dari berbagai lapisan masyarakat.",
+                fakta: "H.O.S. Tjokroaminoto dikenal sebagai 'Raja Tanpa Mahkota' yang membimbing banyak tokoh besar."
             },
             {
                 id: "indische-partij",
                 name: "Indische Partij",
-                year: "1912",
                 category: "Politik",
-                founder: "Douwes Dekker, Tjipto Mangoenkoesoemo, Ki Hadjar Dewantara",
-                focus: "Politik nasionalis radikal dan kemerdekaan Hindia.",
-                background: "Didirikan oleh Tiga Serangkai sebagai partai politik pertama di Hindia Belanda yang secara terbuka menuntut kemerdekaan.",
-                purpose: "Membangkitkan rasa cinta tanah air bagi seluruh penduduk tanpa memandang ras.",
-                role: "Mengubah haluan perjuangan dari kooperatif menjadi politik radikal anti-kolonial secara terang-terangan.",
-                fact: "Para pendirinya diasingkan ke negeri Belanda akibat tulisan kritikan tajam terhadap pemerintah kolonial."
+                year: "1912",
+                background: "Didirikan di Bandung oleh Tiga Serangkai sebagai partai politik pertama yang secara tegas bercorak nasionalis Hindia.",
+                tujuan: "Membangun kesadaran nasional Hindia dan mencapai kemerdekaan dari penjajahan Belanda.",
+                tokoh: "E.F.E. Douwes Dekker, Tjipto Mangoenkoesoemo, Ki Hadjar Dewantara",
+                peran: "Menanamkan gagasan nasionalisme radikal dan anti-kolonial tanpa memandang ras.",
+                fakta: "Ketiga pendirinya pernah diasingkan oleh pemerintah kolonial Belanda ke negeri Belanda."
             },
             {
                 id: "muhammadiyah",
                 name: "Muhammadiyah",
+                category: "Sosial",
                 year: "1912",
-                category: "Sosial & Agama",
-                founder: "K.H. Ahmad Dahlan",
-                focus: "Pendidikan modern, sosial, dan pemurnian keagamaan.",
-                background: "Didirikan di Kampung Kauman Yogyakarta untuk memperbaiki pemahaman Islam dan mengatasi keterbelakangan pendidikan.",
-                purpose: "Menyebarkan ajaran Islam berdasarkan Al-Qur'an dan Sunnah serta mendirikan amal usaha.",
-                role: "Memelopori sistem pendidikan modern berbasis agama dan sains serta layanan sosial kemanusiaan.",
-                fact: "Muhammadiyah membangun sekolah-sekolah umum bercorak Islam pertama di Indonesia."
+                background: "Didirikan oleh K.H. Ahmad Dahlan di Yogyakarta melalui pemahaman Islam yang berkemajuan dan modern.",
+                tujuan: "Menyebarkan ajaran Islam serta memajukan pendidikan dan kesejahteraan sosial masyarakat.",
+                tokoh: "K.H. Ahmad Dahlan, Nyai Ahmad Dahlan",
+                peran: "Mendirikan ribuan sekolah, rumah sakit, dan panti asuhan modern di seluruh Nusantara.",
+                fakta: "Menggabungkan sistem pendidikan agama tradisional dengan pendidikan umum gaya barat."
             },
             {
                 id: "taman-siswa",
                 name: "Taman Siswa",
-                year: "1922",
                 category: "Pendidikan",
-                founder: "Ki Hadjar Dewantara",
-                focus: "Pendidikan nasional kerakyatan dan kebudayaan.",
-                background: "Didirikan sebagai bentuk perlawanan kultural terhadap sistem pendidikan kolonial Belanda yang diskriminatif.",
-                purpose: "Membangun kemerdekaan jiwa anak didik serta melestarikan kebudayaan nasional.",
-                role: "Menyediakan akses pendidikan bagi anak-anak pribumi dari berbagai kalangan.",
-                fact: "Semboyan pendidikan 'Tut Wuri Handayani' lahir dari perguruan ini."
+                year: "1922",
+                background: "Didirikan oleh Ki Hadjar Dewantara di Yogyakarta sebagai perlawanan terhadap sistem pendidikan kolonial yang diskriminatif.",
+                tujuan: "Menyelenggarakan pendidikan nasional yang merdeka bagi kaum pribumi berbasis kebudayaan bangsa.",
+                tokoh: "Ki Hadjar Dewantara",
+                peran: "Melahirkan konsep kepemimpinan 'Ing Ngarsa Sung Tuladha, Ing Madya Mangun Karsa, Tut Wuri Handayani'.",
+                fakta: "Menjadi wadah pendidikan merdeka yang menolak subsidi dari pemerintah kolonial."
             },
             {
                 id: "perhimpunan-indonesia",
                 name: "Perhimpunan Indonesia",
-                year: "1925",
                 category: "Politik",
-                founder: "Mohammad Hatta, Ali Sastroamidjojo, dll.",
-                focus: "Perjuangan politik luar negeri dan propaganda kemerdekaan.",
-                background: "Transformasi dari Indische Vereeniging di Belanda menjadi wadah politik radikal mahasiswa Indonesia di Eropa.",
-                purpose: "Menuntut kemerdekaan penuh bagi Indonesia dan menyuarakan aspirasi di forum internasional.",
-                role: "Menjadi jembatan diplomasi internasional dan melahirkan kader pemimpin nasional.",
-                fact: "Mohammad Hatta menyampaikan pidato pembelaan heroik berjudul 'Indonesia Merdeka' di pengadilan Den Haag."
+                year: "1925",
+                background: "Transformasi dari Indische Vereeniging yang digerakkan oleh para mahasiswa Indonesia di Belanda.",
+                tujuan: "Memperjuangkan kemerdekaan Indonesia dan menyuarakan suara rakyat tertindas di kancah internasional.",
+                tokoh: "Mohammad Hatta, Iwa Kusuma Soemantri, Ali Sastroamidjojo",
+                peran: "Memelopori penggunaan nama 'Indonesia' dan 'Bahasa Indonesia' dalam setiap manifesto perjuangan.",
+                fakta: "Mohammad Hatta sempat ditangkap dan diadili di Den Haag sebelum akhirnya dibebaskan."
             },
             {
                 id: "pni",
-                name: "Partai Nasional Indonesia (PNI)",
-                year: "1927",
+                name: "Partai Nasional Indonesia",
                 category: "Politik",
-                founder: "Ir. Soekarno dan kawan-kawan",
-                focus: "Nasionalisme politik radikal non-kooperatif.",
-                background: "Dibentuk di Bandung untuk menyatukan seluruh tenaga pergerakan nasional dalam satu barisan.",
-                purpose: "Mencapai Indonesia Merdeka dengan asas percaya pada kekuatan sendiri (self-help).",
-                role: "Mengobarkan semangat nasionalisme massa secara gigih melalui pidato-pidato berapi-api.",
-                fact: "Ir. Soekarno menyusun pledoi pembelaan terkenal berjudul 'Indonesia Menggugat' di Landraad Bandung."
+                year: "1927",
+                background: "Didirikan di Bandung oleh Ir. Soekarno dan para kaum intelektual Algemeene Studieclub.",
+                tujuan: "Mencapai Indonesia merdeka dengan asas self-help (menolong diri sendiri) dan non-kooperasi.",
+                tokoh: "Ir. Soekarno, Mr. Iskaq Tjokrohadisurjo, Mr. Anwari",
+                peran: "Menyatukan berbagai golongan dalam satu front nasional radikal anti-kolonial.",
+                fakta: "Ir. Soekarno menyampaikan pembelaan fenomenal berjudul 'Indonesia Menggugat' di pengadilan Bandung."
             },
             {
                 id: "jong-java",
                 name: "Jong Java",
-                year: "1915",
                 category: "Pemuda",
-                founder: "Satiman Wirjosandjojo",
-                focus: "Persatuan pemuda pelajar Jawa, Madura, Bali, dan Lombok.",
-                background: "Semula bernama Tri Dharma, organisasi ini mewadahi para pelajar pribumi tingkat menengah.",
-                purpose: "Memperkuat rasa persatuan di antara pemuda daerah menuju persatuan Indonesia raya.",
-                role: "Menjadi pelopor utama yang meleburkan diri dalam wadah persatuan pemuda nasional.",
-                fact: "Organisasi kepemudaan kedaerahan ini bertransformasi mendukung penuh persatuan nasional."
+                year: "1915",
+                background: "Didirikan oleh Satiman Wirjosandjojo dengan nama awal Tri Koro Dharmo di Gedung STOVIA Jakarta.",
+                tujuan: "Membangun persatuan di antara para pemuda pelajar asal Jawa, Sunda, Madura, dan Bali.",
+                tokoh: "Satiman Wirjosandjojo, Wongsonegoro",
+                peran: "Menjadi wadah pelatihan kepemimpinan pemuda yang kemudian melebur dalam Sumpah Pemuda.",
+                fakta: "Nama Jong Java resmi digunakan dalam Kongres Pertama di Solo tahun 1918."
             },
             {
                 id: "jong-sumatranen-bond",
                 name: "Jong Sumatranen Bond",
-                year: "1917",
                 category: "Pemuda",
-                founder: "Mohammad Hatta, Sanusi Pane, dll.",
-                focus: "Persatuan pemuda pelajar asal Sumatera.",
-                background: "Perkumpulan pemuda pelajar asal Sumatera yang bersekolah di Batavia.",
-                purpose: "Mempererat hubungan antar pelajar dan mendidik calon pemimpin bangsa.",
-                role: "Melahirkan tokoh-tokoh besar yang aktif merumuskan Sumpah Pemuda.",
-                fact: "Mohammad Yamin dari organisasi ini berperan penting merumuskan naskah Sumpah Pemuda 1928."
+                year: "1917",
+                background: "Organisasi pemuda pelajar asal pulau Sumatra yang didirikan di Jakarta.",
+                tujuan: "Mempererat tali persaudaraan antar pelajar Sumatra dan memajukan kebudayaan.",
+                tokoh: "Mohammad Hatta, A.K. Gani, Mohammad Yamin",
+                peran: "Melahirkan tokoh-tokoh penting yang memprakarsai Sumpah Pemuda 1928.",
+                fakta: "Mohammad Yamin aktif sebagai pengurus dan sastrawan terkemuka dalam organisasi ini."
             },
             {
                 id: "nahdlatul-ulama",
                 name: "Nahdlatul Ulama (NU)",
+                category: "Sosial",
                 year: "1926",
-                category: "Sosial & Agama",
-                founder: "K.H. Hasyim Asy'ari, K.H. Wahab Chasbullah",
-                focus: "Keagamaan, sosial, dan pendidikan pesantren.",
-                background: "Didirikan di Surabaya oleh para ulama pesantren untuk mempertahankan ajaran Ahlussunnah wal Jama'ah.",
-                purpose: "Memelihara ajaran Islam tradisional, memajukan madrasah, serta membela kaum tani.",
-                role: "Menggerakkan kesadaran kebangsaan yang memadukan cinta tanah air dengan keimanan.",
-                fact: "Resolusi Jihad tahun 1945 menggerakkan perlawanan rakyat mempertahankan kemerdekaan."
+                background: "Didirikan di Surabaya oleh para ulama besar pesantren atas prakarsa K.H. Hasyim Asy'ari.",
+                tujuan: "Menjaga ajaran Islam Ahlussunnah wal Jamaah serta memajukan pendidikan dan kebangsaan.",
+                tokoh: "K.H. Hasyim Asy'ari, K.H. Wahab Chasbullah, K.H. Bisri Sansuri",
+                peran: "Menggerakkan perlawanan religius dan nasionalis dari basis kaum santri dan pesantren.",
+                fakta: "Lambang bumi bintang sembilan diciptakan oleh K.H. Ridwan Abdullah."
             }
         ];
 
-        const questionsData = [
+        // 4. Evaluation Quiz Data (20 Questions)
+        const quizQuestions = [
             {
-                q: "Organisasi Budi Utomo yang didirikan pada 20 Mei 1908 dicetuskan pertama kali oleh para pelajar sekolah kedokteran...",
-                options: ["A. OSVIA", "B. STOVIA", "C. AMS", "D. HBS"],
+                question: "Organisasi modern pertama di Indonesia yang didirikan pada tanggal 20 Mei 1908 adalah...",
+                options: ["A. Sarekat Islam", "B. Budi Utomo", "C. Indische Partij", "D. Taman Siswa"],
                 answer: 1
             },
             {
-                q: "Tokoh utama yang menjadi inspirator berdirinya Budi Utomo melalui gagasan bantuan dana pelajar adalah...",
-                options: ["A. dr. Wahidin Sudirohusodo", "B. H. Samanhudi", "C. H.O.S. Tjokroaminoto", "D. Douwes Dekker"],
+                question: "Tokoh yang memprakarsai berdirinya Budi Utomo dan mahasiswa STOVIA adalah...",
+                options: ["A. Dr. Soetomo", "B. H. Samanhudi", "C. Ki Hadjar Dewantara", "D. Douwes Dekker"],
                 answer: 0
             },
             {
-                q: "Sarekat Islam (SI) yang berkembang pesat bermula dari perkumpulan Sarekat Dagang Islam yang didirikan di kota...",
-                options: ["A. Jakarta", "B. Surabaya", "C. Surakarta (Solo)", "D. Bandung"],
+                question: "Tanggal berdirinya Budi Utomo (20 Mei) diperingati setiap tahun sebagai...",
+                options: ["A. Hari Sumpah Pemuda", "B. Hari Pahlawan", "C. Hari Kebangkitan Nasional", "D. Hari Kemerdekaan"],
                 answer: 2
             },
             {
-                q: "Tiga Serangkai pendiri Indische Partij (1912) terdiri atas Douwes Dekker, Tjipto Mangoenkoesoemo, dan...",
-                options: ["A. Ki Hadjar Dewantara", "B. Mohammad Hatta", "C. Ir. Soekarno", "D. dr. Soetomo"],
-                answer: 0
-            },
-            {
-                q: "Muhammadiyah didirikan di Yogyakarta pada tahun 1912 oleh seorang ulama pembaharu bernama...",
-                options: ["A. K.H. Hasyim Asy'ari", "B. K.H. Ahmad Dahlan", "C. K.H. Mas Mansur", "D. K.H. Wahid Hasyim"],
+                question: "Sarekat Dagang Islam (SDI) yang kemudian menjadi Sarekat Islam didirikan oleh...",
+                options: ["A. H.O.S. Tjokroaminoto", "B. H. Samanhudi", "C. K.H. Ahmad Dahlan", "D. Ir. Soekarno"],
                 answer: 1
             },
             {
-                q: "Perguruan Taman Siswa yang mengusung asas Among didirikan pada tahun 1922 oleh...",
-                options: ["A. Ki Hadjar Dewantara", "B. Douwes Dekker", "C. Mohammad Yamin", "D. Soegondo Djojopoespito"],
-                answer: 0
-            },
-            {
-                q: "Perhimpunan Indonesia merupakan organisasi mahasiswa dan pelajar Indonesia yang berkembang di negara...",
-                options: ["A. Jerman", "B. Belanda", "C. Prancis", "D. Belgia"],
+                question: "Tiga Serangkai (Douwes Dekker, Tjipto Mangoenkoesoemo, Ki Hadjar Dewantara) mendirikan partai bernama...",
+                options: ["A. PNI", "B. Indische Partij", "C. Perhimpunan Indonesia", "D. Gerindo"],
                 answer: 1
             },
             {
-                q: "Partai Nasional Indonesia (PNI) didirikan di Bandung pada tahun 1927 dengan tokoh utama ketuanya yaitu...",
-                options: ["A. Mohammad Hatta", "B. Sutan Sjahrir", "C. Ir. Soekarno", "D. Amir Sjarifuddin"],
+                question: "Muhammadiyah sebagai organisasi sosial dan keagamaan didirikan di Yogyakarta pada tahun 1912 oleh...",
+                options: ["A. K.H. Ahmad Dahlan", "B. K.H. Hasyim Asy'ari", "C. K.H. Wahab Chasbullah", "D. Buya Hamka"],
+                answer: 0
+            },
+            {
+                question: "Ki Hadjar Dewantara mendirikan Perguruan Nasional Taman Siswa pada tahun...",
+                options: ["A. 1918", "B. 1920", "C. 1922", "D. 1928"],
                 answer: 2
             },
             {
-                q: "Kongres Pemuda II yang melahirkan ikrar Sumpah Pemuda diselenggarakan pada tanggal 27-28 Oktober tahun...",
-                options: ["A. 1908", "B. 1918", "C. 1928", "D. 1945"],
+                question: "Semboyan kepemimpinan 'Tut Wuri Handayani' dicetuskan oleh...",
+                options: ["A. Ir. Soekarno", "B. Mohammad Hatta", "C. Ki Hadjar Dewantara", "D. Douwes Dekker"],
                 answer: 2
             },
             {
-                q: "Tokoh pemuda yang memimpin jalannya Kongres Pemuda II dan mengetok palu keputusan Sumpah Pemuda adalah...",
-                options: ["A. Soegondo Djojopoespito", "B. Mohammad Yamin", "C. W.R. Soepratman", "D. Sunario"],
+                question: "Organisasi pelajar Indonesia di negeri Belanda yang memperjuangkan kemerdekaan di kancah internasional adalah...",
+                options: ["A. Jong Java", "B. Perhimpunan Indonesia", "C. Indische Vereeniging", "D. PNI Pelajar"],
+                answer: 1
+            },
+            {
+                question: "Tokoh utama Perhimpunan Indonesia yang terkenal dengan pledoi 'Indonesia Merdeka' di pengadilan Den Haag adalah...",
+                options: ["A. Mohammad Hatta", "B. Soekarno", "C. Sutan Sjahrir", "D. Tan Malaka"],
                 answer: 0
             },
             {
-                q: "Lagu kebangsaan Indonesia Raya untuk pertama kalinya diperdengarkan secara instrumental oleh penciptanya pada...",
-                options: ["A. Kongres Pemuda I", "B. Kongres Pemuda II", "C. Proklamasi Kemerdekaan", "D. Sidang BPUPKI"],
-                answer: 1
-            },
-            {
-                q: "Nahdlatul Ulama (NU) didirikan di Surabaya pada tahun 1926 oleh para ulama pesantren di bawah pimpinan...",
-                options: ["A. K.H. Hasyim Asy'ari", "B. K.H. Ahmad Dahlan", "C. K.H. Mas Mansur", "D. K.H. Wahid Hasyim"],
+                question: "Partai Nasional Indonesia (PNI) didirikan di Bandung pada tahun 1927 oleh...",
+                options: ["A. Ir. Soekarno", "B. Mohammad Yamin", "C. Amir Sjarifuddin", "D. Ali Sastroamidjojo"],
                 answer: 0
             },
             {
-                q: "Faktor internal yang mendorong lahirnya Pergerakan Nasional Indonesia adalah...",
-                options: ["A. Kemenangan Jepang atas Rusia", "B. Lahirnya kaum terpelajar pribumi", "C. Pergerakan nasional India", "D. Politik Etis kolonial semata"],
-                answer: 1
-            },
-            {
-                q: "Politik Etis (Politik Balas Budi) yang diterapkan Belanda mencakup tiga program utama, kecuali...",
-                options: ["A. Irigasi", "B. Emigrasi", "C. Edukasi", "D. Industrialisasi militer"],
-                answer: 3
-            },
-            {
-                q: "Organisasi kepemudaan Jong Sumatranen Bond melahirkan tokoh besar yang kemudian menjadi Wakil Presiden pertama RI yaitu...",
-                options: ["A. Adam Malik", "B. Mohammad Hatta", "C. Amir Sjarifuddin", "D. Tan Malaka"],
-                answer: 1
-            },
-            {
-                q: "Semboyan 'Self-help' (menolong diri sendiri) dan non-kooperatif menjadi asas perjuangan dari partai...",
-                options: ["A. Budi Utomo", "B. Parindra", "C. PNI", "D. Gerindo"],
-                answer: 2
-            },
-            {
-                q: "Pledoi atau pembelaan terkenal yang disampaikan Ir. Soekarno di depan pengadilan kolonial Bandung berjudul...",
-                options: ["A. Indonesia Menggugat", "B. Menuju Republik Indonesia", "C. Mentjari Indonesia", "D. Dari Djawa Menuju Indonesia"],
+                question: "Pledoi atau pembelaan terkenal yang disampaikan Ir. Soekarno di muka pengadilan Landraad Bandung berjudul...",
+                options: ["A. Indonesia Menggugat", "B. Mencapai Indonesia Merdeka", "C. Indonesia Merdeka", "D. Mentjapai Indonesia Merdeka"],
                 answer: 0
             },
             {
-                q: "Organisasi Indische Partij bersifat nasionalis radikal karena secara terang-terangan menuntut...",
-                options: ["A. Perbaikan sekolah desa", "B. Kemerdekaan Hindia dari Belanda", "C. Penurunan pajak perdagangan", "D. Hak suara bangsawan"],
+                question: "Kongres Pemuda II yang melahirkan Sumpah Pemuda diselenggarakan pada tanggal...",
+                options: ["A. 20 Mei 1908", "B. 28 Oktober 1928", "C. 17 Agustus 1945", "D. 1 Juni 1945"],
                 answer: 1
             },
             {
-                q: "Tanggal 20 Mei yang merupakan hari lahir Budi Utomo diperingati bangsa Indonesia sebagai hari...",
-                options: ["A. Sumpah Pemuda", "B. Pahlawan", "C. Kebangkitan Nasional", "D. Pendidikan Nasional"],
-                answer: 2
+                question: "Ketua panitia Kongres Pemuda II tahun 1928 adalah...",
+                options: ["A. Mohammad Yamin", "B. Soegondo Djojopoesposo", "C. Wage Rudolf Soepratman", "D. Amir Sjarifuddin"],
+                answer: 1
             },
             {
-                q: "Makna utama dari peristiwa Sumpah Pemuda 1928 bagi perjuangan bangsa adalah...",
-                options: ["A. Penghapusan batas-batas pulau", "B. Penyatuan tekad berbangsa dan bertanah air satu melampaui ikatan kedaerahan", "C. Pembentukan kabinet pertama", "D. Pengusiran seluruh bangsa asing"],
+                question: "Lagu kebangsaan Indonesia Raya pertama kali diperdengarkan secara instrumental pada Kongres Pemuda II oleh...",
+                options: ["A. Ismail Marzuki", "B. Wage Rudolf Soepratman", "C. Kusbini", "D. C. Simanjuntak"],
                 answer: 1
+            },
+            {
+                question: "Nahdlatul Ulama (NU) didirikan di Surabaya pada tahun 1926 atas prakarsa ulama besar bernama...",
+                options: ["A. K.H. Ahmad Dahlan", "B. K.H. Hasyim Asy'ari", "C. K.H. Mas Mansur", "D. K.H. Wahid Hasyim"],
+                answer: 1
+            },
+            {
+                question: "Organisasi pemuda pelajar yang pertama kali berdiri (1915) dengan nama awal Tri Koro Dharmo adalah...",
+                options: ["A. Jong Sumatranen Bond", "B. Jong Java", "C. Jong Ambon", "D. Jong Celebes"],
+                answer: 1
+            },
+            {
+                question: "Asas perjuangan PNI dalam mencapai kemerdekaan Indonesia adalah...",
+                options: ["A. Koperasi dengan Belanda", "B. Self-help (menolong diri sendiri) dan Non-kooperasi", "C. Volksraad", "D. Parlementer kolonial"],
+                answer: 1
+            },
+            {
+                question: "Faktor internal yang mendorong lahirnya Pergerakan Nasional Indonesia adalah...",
+                options: ["A. Kemenangan Jepang atas Rusia", "B. Munculnya golongan intelektual pribumi terpelajar", "C. Kebijakan Etis kolonial", "D. Gerakan nasionalisme di India dan Tiongkok"],
+                answer: 1
+            },
+            {
+                question: "Politik Etis (Balas Budi) yang diterapkan Belanda dan secara tidak langsung memicu pergerakan nasional dicetuskan oleh...",
+                options: ["A. Van Deventer", "B. J.P. Coen", "C. Daendels", "D. Raffles"],
+                answer: 0
             }
         ];
 
-        const memoryPairs = [
-            { org: "Budi Utomo", match: "dr. Soetomo" },
-            { org: "Muhammadiyah", match: "K.H. Ahmad Dahlan" },
-            { org: "Indische Partij", match: "Douwes Dekker" },
-            { org: "PNI", match: "Ir. Soekarno" },
-            { org: "Taman Siswa", match: "Ki Hadjar Dewantara" },
-            { org: "Perhimpunan Indonesia", match: "Mohammad Hatta" }
-        ];
-
-        // --- STATE MANAGEMENT & LOCALSTORAGE ---
-
-        let userProgress = {
-            home: true,
-            timeline: false,
-            videos: false,
-            materials: false,
-            game: false,
-            evaluation: false
-        };
-
-        let watchedVideos = {}; // vId -> boolean
-        let videoNotes = {};    // vId -> text
-        let currentVideoId = 1;
+        // --- APPLICATION STATE VARIABLES ---
+        let currentTimelineIndex = 0;
+        let activeVideoId = 1;
         let currentVideoFilter = "Semua";
-
-        let currentTimelineIdx = 0;
-        let activeFilter = "Semua";
-
-        // Quiz State
-        let currentQuizIdx = 0;
-        let userAnswers = {};
+        let currentMaterialFilter = "Semua";
 
         // Game State
         let gameCards = [];
         let flippedCards = [];
         let matchedPairs = 0;
-        let gameTries = 0;
-        let gameTimer = 0;
-        let gameInterval = null;
-        let isGameLocked = false;
+        let gameAttempts = 0;
+        let gameTimerInterval = null;
+        let gameSeconds = 0;
+        let isGameStarted = false;
 
-        function loadProgress() {
-            const savedProg = localStorage.getItem('eshist_progress_v3');
-            if (savedProg) {
-                try { userProgress = JSON.parse(savedProg); } catch(e){}
-            }
-            const savedWatch = localStorage.getItem('eshist_watched_videos');
-            if (savedWatch) {
-                try { watchedVideos = JSON.parse(savedWatch); } catch(e){}
-            }
-            const savedNotes = localStorage.getItem('eshist_video_notes');
-            if (savedNotes) {
-                try { videoNotes = JSON.parse(savedNotes); } catch(e){}
-            }
-            updateProgressUI();
-        }
+        // Quiz State
+        let currentQuizIndex = 0;
+        let quizAnswers = new Array(quizQuestions.length).fill(null);
+        let quizScore = 0;
 
-        function markPageVisited(pageKey) {
-            userProgress[pageKey] = true;
-            localStorage.setItem('eshist_progress_v3', JSON.stringify(userProgress));
-            updateProgressUI();
-        }
-
-        function updateProgressUI() {
-            const keys = Object.keys(userProgress);
-            const visitedCount = keys.filter(k => userProgress[k]).length;
-            const pct = Math.round((visitedCount / keys.length) * 100);
-
-            document.getElementById('topbar-progress-text').innerText = pct + '%';
-            document.getElementById('topbar-progress-bar').style.width = pct + '%';
-
-            // Also update video progress widget
-            const totalV = videos.length;
-            const watchedCount = Object.keys(watchedVideos).filter(id => watchedVideos[id]).length;
-            document.getElementById('video-progress-count').innerText = `${watchedCount} / ${totalV}`;
-            const vPct = totalV > 0 ? Math.round((watchedCount / totalV) * 100) : 0;
-            document.getElementById('video-progress-bar').style.width = vPct + '%';
-
-            if (watchedCount > 0) {
-                userProgress['videos'] = true;
-                localStorage.setItem('eshist_progress_v3', JSON.stringify(userProgress));
+        // --- LOCALSTORAGE & PROGRESS MANAGEMENT ---
+        function getSavedProgress() {
+            try {
+                const data = localStorage.getItem('eshist_progress');
+                return data ? JSON.parse(data) : { watchedVideos: [], completedGame: false, completedEvaluation: false };
+            } catch (e) {
+                return { watchedVideos: [], completedGame: false, completedEvaluation: false };
             }
         }
 
-        // --- NAVIGATION SYSTEM ---
+        function saveProgressData(data) {
+            try {
+                localStorage.setItem('eshist_progress', JSON.stringify(data));
+            } catch (e) {}
+            updateGlobalProgress();
+        }
 
-        const pageTitles = {
-            home: "Beranda",
-            timeline: "Jejak Sejarah",
-            videos: "Video Edukasi",
-            materials: "Materi Organisasi",
-            game: "Memory Match",
-            evaluation: "Evaluasi Siswa",
-            about: "Tentang EsHist"
+        function updateGlobalProgress() {
+            const progress = getSavedProgress();
+            let score = 0;
+            // 4 video items
+            const watchedCount = progress.watchedVideos ? progress.watchedVideos.length : 0;
+            score += (watchedCount / 4) * 40;
+            // Game completed
+            if (progress.completedGame) score += 30;
+            // Evaluation completed
+            if (progress.completedEvaluation) score += 30;
+
+            const finalPercent = Math.min(Math.round(score), 100);
+
+            // Update DOM progress bars
+            document.getElementById('global-progress-bar').style.width = finalPercent + '%';
+            document.getElementById('global-progress-text').innerText = finalPercent + '%';
+            document.getElementById('topbar-progress-bar').style.width = finalPercent + '%';
+            document.getElementById('topbar-progress-text').innerText = finalPercent + '%';
+        }
+
+        // --- NAVIGATION & PAGE TRANSITIONS ---
+        const pageMeta = {
+            home: { title: "Beranda", icon: "🏠" },
+            timeline: { title: "Jejak Sejarah", icon: "⏳" },
+            videos: { title: "Video Edukasi", icon: "🎬" },
+            materials: { title: "Materi Organisasi", icon: "📚" },
+            game: { title: "Game Memory Match", icon: "🎮" },
+            evaluation: { title: "Evaluasi Pembelajaran", icon: "📝" },
+            about: { title: "Tentang EsHist", icon: "ℹ️" }
         };
 
-        function showPage(pageId) {
-            // Hide all sections
-            document.querySelectorAll('.page-section').forEach(sec => {
-                sec.classList.remove('active');
-            });
+        function switchPage(pageId) {
+            // Hide all views
+            const views = document.querySelectorAll('.page-view');
+            views.forEach(v => v.classList.remove('active'));
 
-            // Show selected section
-            const target = document.getElementById(`page-${pageId}`);
+            // Show target view
+            const target = document.getElementById(`view-${pageId}`);
             if (target) {
                 target.classList.add('active');
             }
 
-            // Update Topbar Title
-            document.getElementById('topbar-title').innerText = pageTitles[pageId] || "Dashboard";
+            // Update Topbar
+            if (pageMeta[pageId]) {
+                document.getElementById('topbar-title').innerText = pageMeta[pageId].title;
+                document.getElementById('topbar-icon').innerText = pageMeta[pageId].icon;
+            }
 
-            // Update Desktop Sidebar active state
-            document.querySelectorAll('.sidebar-item').forEach(btn => btn.classList.remove('active'));
-            const desktopNavBtn = document.getElementById(`nav-${pageId}`);
-            if (desktopNavBtn) desktopNavBtn.classList.add('active');
-
-            // Update Mobile Bottom Nav active state
-            document.querySelectorAll('nav.md\\:hidden button').forEach(btn => {
-                btn.classList.remove('text-nationalRed');
-                btn.classList.add('text-gray-500');
+            // Update Sidebar / Mobile Nav Active Styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if (btn.dataset.target === pageId) {
+                    btn.classList.add('bg-stone-100', 'text-stone-900', 'font-bold');
+                } else {
+                    btn.classList.remove('bg-stone-100', 'text-stone-900', 'font-bold');
+                }
             });
-            const mobBtn = document.getElementById(`mob-${pageId}`);
-            if (mobBtn) {
-                mobBtn.classList.remove('text-gray-500');
-                mobBtn.classList.add('text-nationalRed');
-            }
 
-            markPageVisited(pageId);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                if (btn.dataset.target === pageId) {
+                    btn.classList.add('text-esRed', 'font-bold');
+                } else {
+                    btn.classList.remove('text-esRed', 'font-bold');
+                }
+            });
+
+            // Scroll content view to top
+            const contentContainer = document.querySelector('.flex-1.overflow-y-auto');
+            if (contentContainer) contentContainer.scrollTop = 0;
+
+            // Trigger specific page initializers
+            if (pageId === 'timeline') renderTimelineEvent();
+            if (pageId === 'videos') renderVideos();
+            if (pageId === 'materials') renderMaterials();
+            if (pageId === 'game' && !isGameStarted && matchedPairs === 0) initGame();
+            if (pageId === 'evaluation') renderQuizQuestion();
         }
 
-        // --- VIDEO EDUKASI CONTROLLER ---
-
-        function renderVideoPlayer(vId) {
-            const v = videos.find(item => item.id === vId);
-            if (!v) return;
-            currentVideoId = vId;
-
-            // Update Player Sources
-            const player = document.getElementById('main-video-player');
-            const source = document.getElementById('main-video-source');
-            const fallback = document.getElementById('video-offline-fallback');
-
-            source.src = v.file;
-            player.load();
-
-            // Handle missing local file gracefully with error event
-            player.onerror = function() {
-                fallback.classList.remove('hidden');
-                player.classList.add('hidden');
-            };
-            player.oncanplay = function() {
-                fallback.classList.add('hidden');
-                player.classList.remove('hidden');
-            };
-
-            // Update Information Panel
-            document.getElementById('main-vid-category').innerText = v.category;
-            document.getElementById('main-vid-duration').innerText = `⏱️ ${v.duration}`;
-            document.getElementById('main-vid-title').innerText = v.title;
-            document.getElementById('main-vid-desc').innerText = v.description;
-
-            // Watch status badge
-            const isWatched = watchedVideos[v.id] || false;
-            const statusBadge = document.getElementById('main-vid-status');
-            const toggleBtn = document.getElementById('btn-toggle-watch');
-            if (isWatched) {
-                statusBadge.innerText = "✓ Sudah ditonton";
-                statusBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700";
-                toggleBtn.innerText = "Tandai Belum Ditonton";
-            } else {
-                statusBadge.innerText = "Belum ditonton";
-                statusBadge.className = "text-xs font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600";
-                toggleBtn.innerText = "Tandai Selesai ✓";
-            }
-
-            // Load saved note for this video
-            const noteInput = document.getElementById('video-note-input');
-            noteInput.value = videoNotes[v.id] || '';
-
-            renderVideoPlaylist();
-            renderRequiredChecklist();
-        }
-
-        function renderRequiredChecklist() {
-            const container = document.getElementById('required-videos-checklist');
-            if (!container) return;
-            container.innerHTML = '';
-
-            videos.forEach(v => {
-                const isWatched = watchedVideos[v.id] || false;
-                const card = document.createElement('div');
-                card.className = "bg-white p-3.5 rounded-2xl border border-amber-200 flex items-center justify-between text-xs shadow-sm";
-                card.innerHTML = `
-                    <div class="space-y-0.5 pr-2">
-                        <span class="text-[10px] font-bold text-nationalRed uppercase tracking-wider">${v.category}</span>
-                        <div class="font-black text-nationalDark line-clamp-1">${v.title}</div>
-                        <div class="text-[10px] text-gray-500 font-mono">📁 ${v.file}</div>
+        // --- 1. TIMELINE LOGIC (ONE-EVENT-AT-A-TIME) ---
+        function renderTimelineEvent() {
+            const event = timelineEvents[currentTimelineIndex];
+            const container = document.getElementById('timeline-card-content');
+            
+            container.innerHTML = `
+                <div class="flex flex-col md:flex-row items-center gap-8">
+                    <div class="w-full md:w-1/3 flex flex-col items-center justify-center p-8 bg-stone-50 rounded-3xl border border-stone-100 text-center">
+                        <span class="text-6xl mb-3">${event.icon}</span>
+                        <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-bold mb-2">${event.year}</span>
+                        <h4 class="text-xs text-stone-500 font-semibold uppercase tracking-wider">${event.category}</h4>
                     </div>
-                    <button onclick="renderVideoPlayer(${v.id})" class="bg-nationalCream hover:bg-amber-100 text-nationalDark font-bold px-3 py-1.5 rounded-xl border border-amber-200 transition shrink-0">
-                        Pilih ➔
-                    </button>
-                `;
-                container.appendChild(card);
-            });
+                    <div class="w-full md:w-2/3 space-y-4">
+                        <h3 class="text-2xl sm:text-3xl font-bold text-stone-900">${event.title}</h3>
+                        <p class="text-stone-600 text-sm sm:text-base leading-relaxed">${event.description}</p>
+                        <div class="p-4 bg-stone-50 rounded-2xl border border-stone-100">
+                            <span class="text-xs font-semibold text-stone-400 block mb-1">Tokoh Utama:</span>
+                            <span class="text-sm font-bold text-stone-900">${event.tokoh}</span>
+                        </div>
+                        <div class="pt-2">
+                            <button onclick="openMaterialByTitle('${event.title}')" class="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs rounded-xl transition-all inline-flex items-center gap-2">
+                                Pelajari Materi Organisasi →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('timeline-counter').innerText = `${currentTimelineIndex + 1} / ${timelineEvents.length}`;
+            document.getElementById('timeline-prev-btn').disabled = currentTimelineIndex === 0;
+            document.getElementById('timeline-prev-btn').style.opacity = currentTimelineIndex === 0 ? '0.4' : '1';
+            document.getElementById('timeline-next-btn').disabled = currentTimelineIndex === timelineEvents.length - 1;
+            document.getElementById('timeline-next-btn').style.opacity = currentTimelineIndex === timelineEvents.length - 1 ? '0.4' : '1';
         }
 
-        function renderVideoPlaylist(filter = "Semua", query = "") {
-            const grid = document.getElementById('video-playlist-grid');
-            grid.innerHTML = '';
+        function nextTimelineEvent() {
+            if (currentTimelineIndex < timelineEvents.length - 1) {
+                currentTimelineIndex++;
+                renderTimelineEvent();
+            }
+        }
 
+        function prevTimelineEvent() {
+            if (currentTimelineIndex > 0) {
+                currentTimelineIndex--;
+                renderTimelineEvent();
+            }
+        }
+
+        function openMaterialByTitle(title) {
+            const found = materials.find(m => m.name.toLowerCase().includes(title.toLowerCase()) || title.toLowerCase().includes(m.name.toLowerCase()));
+            switchPage('materials');
+            if (found) {
+                openMaterialModal(found.id);
+            }
+        }
+
+        // --- 2. VIDEO EDUKASI LOGIC ---
+        function renderVideos() {
+            const searchTerm = document.getElementById('video-search-input').value.toLowerCase();
+            const grid = document.getElementById('video-grid');
+            const notFound = document.getElementById('video-not-found');
+
+            const progress = getSavedProgress();
+            const watchedList = progress.watchedVideos || [];
+
+            // Filter videos
             const filtered = videos.filter(v => {
-                const matchCat = (filter === "Semua" || v.category === filter);
-                const matchQuery = v.title.toLowerCase().includes(query.toLowerCase()) || v.description.toLowerCase().includes(query.toLowerCase()) || v.category.toLowerCase().includes(query.toLowerCase());
-                return matchCat && matchQuery;
+                const matchCategory = currentVideoFilter === 'Semua' || v.category === currentVideoFilter;
+                const matchSearch = v.title.toLowerCase().includes(searchTerm) || v.category.toLowerCase().includes(searchTerm) || v.description.toLowerCase().includes(searchTerm);
+                return matchCategory && matchSearch;
             });
+
+            // Update Progress count
+            const completedCount = watchedList.length;
+            document.getElementById('video-progress-count').innerText = `${completedCount} / ${videos.length} video selesai`;
+            const pct = Math.round((completedCount / videos.length) * 100);
+            document.getElementById('video-progress-bar').style.width = pct + '%';
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-semibold">Video tidak ditemukan.</div>`;
+                grid.innerHTML = '';
+                notFound.classList.remove('hidden');
                 return;
             }
+            notFound.classList.add('hidden');
 
-            filtered.forEach(v => {
-                const isSelected = v.id === currentVideoId;
-                const isWatched = watchedVideos[v.id] || false;
-                const card = document.createElement('div');
-                card.className = `bg-white rounded-3xl border ${isSelected ? 'border-nationalRed ring-2 ring-red-100' : 'border-gray-200'} card-shadow overflow-hidden flex flex-col justify-between transition hover:border-nationalRed cursor-pointer`;
-                card.onclick = () => renderVideoPlayer(v.id);
-
-                card.innerHTML = `
-                    <div class="relative w-full aspect-video bg-gradient-to-br from-gray-900 to-nationalDark flex flex-col items-center justify-center p-4 text-white text-center">
-                        <div class="absolute top-3 left-3 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider">${v.category}</div>
-                        <div class="absolute top-3 right-3 bg-black/40 backdrop-blur-md px-2.5 py-0.5 rounded-full text-[10px] font-bold">⏱️ ${v.duration}</div>
-                        
-                        <!-- Thumbnail Mockup -->
-                        <div class="text-3xl mb-1">▶</div>
-                        <h4 class="text-sm font-black line-clamp-2 mt-1 px-2">${v.title}</h4>
-                    </div>
-
-                    <div class="p-4 space-y-3 flex-1 flex flex-col justify-between">
+            grid.innerHTML = filtered.map(v => {
+                const isWatched = watchedList.includes(v.id);
+                return `
+                    <div onclick="selectVideo(${v.id})" class="bg-white rounded-3xl border border-stone-200/80 p-4 shadow-sm cursor-pointer es-card flex flex-col justify-between group">
                         <div>
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase">${v.category}</span>
-                                <span class="text-[10px] font-bold ${isWatched ? 'text-green-600 bg-green-50 px-2 py-0.5 rounded-full' : 'text-gray-400'}">${isWatched ? '✓ Selesai' : 'Belum'}</span>
+                            <div class="relative w-full aspect-video bg-stone-900 rounded-2xl overflow-hidden mb-3 flex items-center justify-center text-white">
+                                <div class="absolute inset-0 bg-gradient-to-t from-stone-900/60 to-transparent"></div>
+                                <span class="text-3xl group-hover:scale-110 transition-transform relative z-10">▶</span>
+                                <span class="absolute bottom-2 right-2 px-2 py-0.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold rounded-lg">${v.duration}</span>
+                                <span class="absolute top-2 left-2 px-2 py-0.5 bg-esRed text-white text-[10px] font-semibold rounded-lg">${v.category}</span>
                             </div>
-                            <h5 class="font-bold text-nationalDark text-xs line-clamp-2">${v.title}</h5>
+                            <h4 class="font-bold text-sm text-stone-900 mb-1 group-hover:text-esRed transition-colors">${v.title}</h4>
+                            <p class="text-xs text-stone-500 line-clamp-2">${v.description}</p>
                         </div>
-                        <button class="w-full bg-nationalCream hover:bg-red-50 hover:text-nationalRed text-nationalDark font-bold py-2 rounded-xl text-xs border border-gray-200 transition">
-                            ${isSelected ? 'Sedang Diputar' : 'Tonton Video →'}
-                        </button>
+                        <div class="pt-3 mt-3 border-t border-stone-100 flex items-center justify-between">
+                            <span class="text-[11px] font-semibold ${isWatched ? 'text-emerald-600' : 'text-stone-400'}">
+                                ${isWatched ? '✓ Sudah ditonton' : 'Belum ditonton'}
+                            </span>
+                            <span class="text-xs font-bold text-esRed">Putar →</span>
+                        </div>
                     </div>
                 `;
-                grid.appendChild(card);
-            });
+            }).join('');
+
+            // Load Active Video Player Details
+            const activeV = videos.find(v => v.id === activeVideoId) || videos[0];
+            document.getElementById('main-video-title').innerText = activeV.title;
+            document.getElementById('main-video-category').innerText = activeV.category;
+            document.getElementById('main-video-duration').innerText = activeV.duration;
+            document.getElementById('main-video-desc').innerText = activeV.description;
+            
+            const badge = document.getElementById('main-video-status-badge');
+            if (watchedList.includes(activeV.id)) {
+                badge.innerText = '✓ Sudah ditonton';
+                badge.className = 'px-2.5 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-semibold';
+            } else {
+                badge.innerText = 'Belum ditonton';
+                badge.className = 'px-2.5 py-0.5 bg-stone-100 text-stone-600 rounded-full text-xs font-semibold';
+            }
+
+            // Load saved notes for this video
+            try {
+                const notes = JSON.parse(localStorage.getItem(`eshist_note_${activeV.id}`) || '""');
+                document.getElementById('video-notes-input').value = notes;
+            } catch(e) {
+                document.getElementById('video-notes-input').value = '';
+            }
+
+            const player = document.getElementById('main-video-player');
+            const fallback = document.getElementById('video-fallback-msg');
+            player.src = activeV.file;
+            player.onerror = function() {
+                fallback.classList.remove('hidden');
+            };
+            player.onloadeddata = function() {
+                fallback.classList.add('hidden');
+            };
+        }
+
+        function selectVideo(id) {
+            activeVideoId = id;
+            renderVideos();
+            const contentContainer = document.querySelector('.flex-1.overflow-y-auto');
+            if (contentContainer) contentContainer.scrollTop = 0;
         }
 
         function setVideoFilter(cat) {
             currentVideoFilter = cat;
-            document.querySelectorAll('.v-filter-btn').forEach(btn => {
-                btn.className = "v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition";
-                if (btn.innerText.toLowerCase() === cat.toLowerCase() || (cat === "Semua" && btn.innerText === "Semua")) {
-                    btn.className = "v-filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-nationalRed text-white transition";
+            document.querySelectorAll('.video-filter-btn').forEach(btn => {
+                if (btn.innerText === cat) {
+                    btn.className = 'video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-esRed text-white transition-all';
+                } else {
+                    btn.className = 'video-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all';
                 }
             });
-            const q = document.getElementById('search-video').value;
-            renderVideoPlaylist(currentVideoFilter, q);
+            renderVideos();
         }
 
         function filterVideos() {
-            const q = document.getElementById('search-video').value;
-            renderVideoPlaylist(currentVideoFilter, q);
+            renderVideos();
         }
 
-        function toggleWatchStatus() {
-            watchedVideos[currentVideoId] = !watchedVideos[currentVideoId];
-            localStorage.setItem('eshist_watched_videos', JSON.stringify(watchedVideos));
-            renderVideoPlayer(currentVideoId);
-            updateProgressUI();
-        }
-
-        function onVideoEnded() {
-            watchedVideos[currentVideoId] = true;
-            localStorage.setItem('eshist_watched_videos', JSON.stringify(watchedVideos));
-            renderVideoPlayer(currentVideoId);
-            updateProgressUI();
-        }
-
-        function saveVideoNote() {
-            const val = document.getElementById('video-note-input').value;
-            videoNotes[currentVideoId] = val;
-            localStorage.setItem('eshist_video_notes', JSON.stringify(videoNotes));
-            
-            const savedNotice = document.getElementById('note-saved-status');
-            savedNotice.classList.remove('hidden');
-            setTimeout(() => {
-                savedNotice.classList.add('hidden');
-            }, 2000);
-        }
-
-        function loadLocalVideoFile(input) {
-            if (input.files && input.files[0]) {
-                const fileURL = URL.createObjectURL(input.files[0]);
-                const player = document.getElementById('main-video-player');
-                const source = document.getElementById('main-video-source');
-                const fallback = document.getElementById('video-offline-fallback');
-                
-                source.src = fileURL;
-                player.load();
-                fallback.classList.add('hidden');
-                player.classList.remove('hidden');
-                player.play();
+        function handleVideoEnded() {
+            const progress = getSavedProgress();
+            if (!progress.watchedVideos) progress.watchedVideos = [];
+            if (!progress.watchedVideos.includes(activeVideoId)) {
+                progress.watchedVideos.push(activeVideoId);
+                saveProgressData(progress);
+                renderVideos();
             }
         }
 
-        function jumpToRelatedMaterial() {
-            showPage('materials');
+        function saveVideoNotes() {
+            const val = document.getElementById('video-notes-input').value;
+            try {
+                localStorage.setItem(`eshist_note_${activeVideoId}`, JSON.stringify(val));
+                alertBox('Catatan belajar berhasil disimpan!');
+            } catch(e) {}
         }
 
-        // --- TIMELINE CONTROLLER ---
-
-        function renderTimeline() {
-            const t = timelineData[currentTimelineIdx];
-            
-            // Render Dots
-            const dotsContainer = document.getElementById('timeline-dots');
-            dotsContainer.innerHTML = '';
-            timelineData.forEach((item, idx) => {
-                const dot = document.createElement('button');
-                dot.className = `px-3 py-1.5 rounded-xl text-xs font-bold transition ${idx === currentTimelineIdx ? 'bg-nationalRed text-white shadow' : 'bg-nationalCream text-gray-600 border border-gray-200 hover:bg-gray-200'}`;
-                dot.innerText = item.year;
-                dot.onclick = () => {
-                    currentTimelineIdx = idx;
-                    renderTimeline();
-                };
-                dotsContainer.appendChild(dot);
-            });
-
-            // Render Card Data
-            document.getElementById('tl-year').innerText = t.year;
-            document.getElementById('tl-category').innerText = t.category;
-            document.getElementById('tl-title').innerText = t.title;
-            document.getElementById('tl-info').innerText = t.info;
-            document.getElementById('tl-tokoh').innerText = t.tokoh;
-            document.getElementById('tl-counter').innerText = `${currentTimelineIdx + 1} / ${timelineData.length}`;
+        function openMaterialFromVideo() {
+            const activeV = videos.find(v => v.id === activeVideoId);
+            if (!activeV) return;
+            openMaterialByTitle(activeV.title);
         }
 
-        function nextTimeline() {
-            currentTimelineIdx = (currentTimelineIdx + 1) % timelineData.length;
-            renderTimeline();
+        // Custom notification box instead of alert()
+        function alertBox(msg) {
+            const div = document.createElement('div');
+            div.className = 'fixed bottom-6 right-6 bg-stone-900 text-white px-6 py-3 rounded-2xl shadow-xl z-50 text-sm font-medium animate-bounce';
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 2500);
         }
 
-        function prevTimeline() {
-            currentTimelineIdx = (currentTimelineIdx - 1 + timelineData.length) % timelineData.length;
-            renderTimeline();
-        }
+        // --- 3. MATERIALS / ORGANIZATIONS LOGIC ---
+        function renderMaterials() {
+            const searchTerm = document.getElementById('material-search-input').value.toLowerCase();
+            const grid = document.getElementById('material-grid');
+            const notFound = document.getElementById('material-not-found');
 
-        function openMaterialFromTimeline() {
-            const t = timelineData[currentTimelineIdx];
-            showPage('materials');
-            openOrgModal(t.orgId);
-        }
-
-        // --- MATERIALS & MODAL CONTROLLER ---
-
-        function renderOrganizations(filter = "Semua", query = "") {
-            const grid = document.getElementById('org-grid');
-            grid.innerHTML = '';
-
-            const filtered = organizationsData.filter(org => {
-                const matchCategory = (filter === "Semua" || org.category === filter);
-                const matchQuery = org.name.toLowerCase().includes(query.toLowerCase()) || org.founder.toLowerCase().includes(query.toLowerCase());
-                return matchCategory && matchQuery;
+            const filtered = materials.filter(m => {
+                const matchCategory = currentMaterialFilter === 'Semua' || m.category === currentMaterialFilter;
+                const matchSearch = m.name.toLowerCase().includes(searchTerm) || m.tokoh.toLowerCase().includes(searchTerm) || m.background.toLowerCase().includes(searchTerm);
+                return matchCategory && matchSearch;
             });
 
             if (filtered.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-400 font-semibold">Organisasi tidak ditemukan.</div>`;
+                grid.innerHTML = '';
+                notFound.classList.remove('hidden');
                 return;
             }
+            notFound.classList.add('hidden');
 
-            filtered.forEach(org => {
-                const card = document.createElement('div');
-                card.className = "bg-white p-6 rounded-3xl border border-gray-200 card-shadow hover:border-nationalRed transition flex flex-col justify-between space-y-4";
-                card.innerHTML = `
+            grid.innerHTML = filtered.map(m => `
+                <div onclick="openMaterialModal('${m.id}')" class="bg-white p-6 rounded-3xl border border-stone-200/80 shadow-sm cursor-pointer es-card space-y-3 flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-3">
-                            <span class="bg-red-100 text-nationalRed text-xs font-bold px-3 py-1 rounded-full">${org.year}</span>
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">${org.category}</span>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="px-2.5 py-0.5 bg-red-50 text-esRed rounded-full text-xs font-semibold">${m.category}</span>
+                            <span class="text-xs font-bold text-stone-400">${m.year}</span>
                         </div>
-                        <h3 class="text-xl font-black text-nationalDark mb-2">${org.name}</h3>
-                        <p class="text-gray-600 text-xs leading-relaxed mb-3"><strong>Fokus:</strong> ${org.focus}</p>
+                        <h3 class="font-bold text-lg text-stone-900 mb-1">${m.name}</h3>
+                        <p class="text-xs text-stone-500 line-clamp-2">${m.background}</p>
                     </div>
-                    <div class="border-t border-gray-100 pt-3 space-y-3">
-                        <div class="text-xs">
-                            <span class="text-gray-400 font-bold block uppercase text-[10px]">Tokoh Utama:</span>
-                            <span class="font-bold text-nationalDark">${org.founder}</span>
-                        </div>
-                        <button onclick="openOrgModal('${org.id}')" class="w-full bg-nationalRed hover:bg-nationalDarkRed text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow transition flex items-center justify-center space-x-2">
-                            <span>Buka Materi Detail</span>
-                            <span>→</span>
-                        </button>
+                    <div class="pt-3 border-t border-stone-100 flex items-center justify-between">
+                        <span class="text-xs font-medium text-stone-600 truncate max-w-[180px]">Tokoh: ${m.tokoh}</span>
+                        <span class="text-xs font-bold text-esRed">Detail →</span>
                     </div>
-                `;
-                grid.appendChild(card);
-            });
+                </div>
+            `).join('');
         }
 
-        function setFilter(cat) {
-            activeFilter = cat;
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.className = "filter-btn px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-600 transition";
-                if (btn.innerText.toLowerCase() === cat.toLowerCase() || (cat === "Semua" && btn.innerText === "Semua")) {
-                    btn.className = "filter-btn active-filter px-3.5 py-1.5 rounded-xl text-xs font-bold bg-nationalRed text-white transition";
+        function setMaterialFilter(cat) {
+            currentMaterialFilter = cat;
+            document.querySelectorAll('.material-filter-btn').forEach(btn => {
+                if (btn.innerText === cat) {
+                    btn.className = 'material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-esRed text-white transition-all';
+                } else {
+                    btn.className = 'material-filter-btn px-4 py-2 rounded-xl text-xs font-semibold bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 transition-all';
                 }
             });
-            const q = document.getElementById('search-org').value;
-            renderOrganizations(activeFilter, q);
+            renderMaterials();
         }
 
-        function filterOrganizations() {
-            const q = document.getElementById('search-org').value;
-            renderOrganizations(activeFilter, q);
+        function filterMaterials() {
+            renderMaterials();
         }
 
-        function openOrgModal(orgId) {
-            const org = organizationsData.find(o => o.id === orgId);
-            if (!org) return;
+        function openMaterialModal(id) {
+            const m = materials.find(item => item.id === id);
+            if (!m) return;
 
-            const modalContent = document.getElementById('modal-content');
-            modalContent.innerHTML = `
-                <div class="space-y-4">
-                    <div class="flex items-center space-x-3">
-                        <span class="bg-red-100 text-nationalRed text-xs font-bold px-3 py-1 rounded-full">${org.year}</span>
-                        <h3 class="text-2xl font-black text-nationalDark">${org.name}</h3>
+            const modal = document.getElementById('material-modal');
+            const content = document.getElementById('modal-content');
+
+            content.innerHTML = `
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-3 py-1 bg-red-100 text-esRed rounded-full text-xs font-bold">${m.category}</span>
+                    <span class="text-xs font-bold text-stone-400">Tahun ${m.year}</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold text-stone-900">${m.name}</h2>
+                <div class="space-y-4 text-sm text-stone-600 leading-relaxed pt-2">
+                    <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                        <h4 class="font-bold text-stone-900 mb-1">Latar Belakang</h4>
+                        <p>${m.background}</p>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 bg-nationalCream p-4 rounded-2xl border border-gray-200 text-xs">
-                        <div>
-                            <span class="font-bold text-gray-400 uppercase">Tokoh / Pendiri:</span>
-                            <p class="font-bold text-nationalDark mt-0.5">${org.founder}</p>
-                        </div>
-                        <div>
-                            <span class="font-bold text-gray-400 uppercase">Fokus Perjuangan:</span>
-                            <p class="font-bold text-nationalDark mt-0.5">${org.focus}</p>
-                        </div>
+                    <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                        <h4 class="font-bold text-stone-900 mb-1">Tujuan Utama</h4>
+                        <p>${m.tujuan}</p>
                     </div>
-
-                    <div class="space-y-3 text-xs text-gray-700 leading-relaxed">
-                        <div class="bg-gray-50 p-3.5 rounded-xl">
-                            <h4 class="font-bold text-nationalDark mb-1">🏛️ Latar Belakang:</h4>
-                            <p>${org.background}</p>
-                        </div>
-                        <div class="bg-gray-50 p-3.5 rounded-xl">
-                            <h4 class="font-bold text-nationalDark mb-1">🎯 Tujuan Organisasi:</h4>
-                            <p>${org.purpose}</p>
-                        </div>
-                        <div class="bg-gray-50 p-3.5 rounded-xl">
-                            <h4 class="font-bold text-nationalDark mb-1">⭐ Peran dalam Pergerakan Nasional:</h4>
-                            <p>${org.role}</p>
-                        </div>
-                        <div class="bg-red-50 text-red-900 p-3.5 rounded-xl font-medium">
-                            <h4 class="font-bold mb-1">💡 Fakta Menarik:</h4>
-                            <p>${org.fact}</p>
-                        </div>
+                    <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                        <h4 class="font-bold text-stone-900 mb-1">Tokoh Penting</h4>
+                        <p class="font-semibold text-stone-900">${m.tokoh}</p>
+                    </div>
+                    <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                        <h4 class="font-bold text-stone-900 mb-1">Peran dalam Pergerakan</h4>
+                        <p>${m.peran}</p>
+                    </div>
+                    <div class="bg-red-50/50 p-4 rounded-2xl border border-red-100">
+                        <h4 class="font-bold text-esRed mb-1">Fakta Menarik</h4>
+                        <p class="text-stone-700">${m.fakta}</p>
                     </div>
                 </div>
             `;
-            document.getElementById('org-modal').classList.remove('hidden');
-            document.getElementById('org-modal').classList.add('flex');
-            markPageVisited('materials');
+            modal.classList.remove('hidden');
         }
 
-        function closeOrgModal() {
-            document.getElementById('org-modal').classList.add('hidden');
-            document.getElementById('org-modal').classList.remove('flex');
+        function closeMaterialModal() {
+            document.getElementById('material-modal').classList.add('hidden');
         }
 
-        // --- MEMORY MATCH GAME CONTROLLER ---
+        // --- 4. GAME LOGIC (MEMORY MATCH) ---
+        const gamePairs = [
+            { org: "Budi Utomo", figure: "dr. Soetomo" },
+            { org: "Muhammadiyah", figure: "K.H. Ahmad Dahlan" },
+            { org: "Indische Partij", figure: "Douwes Dekker" },
+            { org: "PNI", figure: "Soekarno" },
+            { org: "Taman Siswa", figure: "Ki Hadjar Dewantara" },
+            { org: "Perhimpunan Indonesia", figure: "Mohammad Hatta" }
+        ];
 
-        function startMemoryGame() {
-            clearInterval(gameInterval);
-            gameTimer = 0;
-            gameTries = 0;
+        function initGame() {
+            clearInterval(gameTimerInterval);
+            gameSeconds = 0;
+            gameAttempts = 0;
             matchedPairs = 0;
+            isGameStarted = true;
             flippedCards = [];
-            isGameLocked = false;
 
-            document.getElementById('game-score').innerText = '0';
-            document.getElementById('game-tries').innerText = '0';
+            document.getElementById('game-attempts').innerText = '0';
+            document.getElementById('game-matches').innerText = '0 / 6';
             document.getElementById('game-timer').innerText = '00:00';
+            document.getElementById('game-win-banner').classList.add('hidden');
 
-            gameInterval = setInterval(() => {
-                gameTimer++;
-                const m = Math.floor(gameTimer / 60).toString().padStart(2, '0');
-                const s = (gameTimer % 60).toString().padStart(2, '0');
-                document.getElementById('game-timer').innerText = `${m}:${s}`;
+            // Start timer
+            gameTimerInterval = setInterval(() => {
+                gameSeconds++;
+                const mins = String(Math.floor(gameSeconds / 60)).padStart(2, '0');
+                const secs = String(gameSeconds % 60).padStart(2, '0');
+                document.getElementById('game-timer').innerText = `${mins}:${secs}`;
             }, 1000);
 
-            let deck = [];
-            memoryPairs.forEach((pair, idx) => {
-                deck.push({ id: idx, type: 'org', text: pair.org, pairId: idx });
-                deck.push({ id: idx + 100, type: 'match', text: pair.match, pairId: idx });
+            // Build 12 cards (6 organizations + 6 figures)
+            let rawCards = [];
+            gamePairs.forEach((p, idx) => {
+                rawCards.push({ id: idx, text: p.org, type: 'org', pairId: idx });
+                rawCards.push({ id: idx + 100, text: p.figure, type: 'figure', pairId: idx });
             });
 
-            deck.sort(() => Math.random() - 0.5);
-            gameCards = deck;
+            // Shuffle cards
+            gameCards = rawCards.sort(() => Math.random() - 0.5);
 
-            const board = document.getElementById('memory-board');
-            board.innerHTML = '';
-            board.className = "grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 items-center justify-center";
-
-            gameCards.forEach((card, index) => {
-                const btn = document.createElement('button');
-                btn.className = "h-24 sm:h-28 rounded-2xl bg-nationalCream border-2 border-gray-300 font-bold text-xs sm:text-sm text-gray-400 flex items-center justify-center p-3 text-center transition transform hover:scale-105 shadow-sm";
-                btn.dataset.index = index;
-                btn.innerHTML = `<span>❓</span>`;
-                btn.onclick = () => flipCard(index, btn);
-                board.appendChild(btn);
-            });
-            markPageVisited('game');
+            renderGameBoard();
         }
 
-        function flipCard(index, btn) {
-            if (isGameLocked) return;
-            const card = gameCards[index];
-            if (btn.classList.contains('matched') || btn.classList.contains('flipped')) return;
+        function renderGameBoard() {
+            const board = document.getElementById('game-board');
+            board.innerHTML = gameCards.map((card, idx) => `
+                <div onclick="flipCard(${idx})" id="card-${idx}" class="perspective-1000 h-28 cursor-pointer select-none">
+                    <div class="transform-style-3d relative w-full h-full rounded-2xl shadow-sm ${card.isFlipped || card.isMatched ? 'rotate-y-180' : ''}">
+                        <!-- Card Front (Hidden) -->
+                        <div class="absolute inset-0 bg-stone-900 rounded-2xl flex items-center justify-center text-white font-bold text-xl backface-hidden shadow-sm">
+                            🏛️
+                        </div>
+                        <!-- Card Back (Revealed) -->
+                        <div class="absolute inset-0 bg-white border-2 ${card.isMatched ? 'border-emerald-500 bg-emerald-50/50' : 'border-stone-200'} rounded-2xl flex flex-col items-center justify-center p-3 text-center backface-hidden rotate-y-180">
+                            <span class="text-[10px] font-bold ${card.isMatched ? 'text-emerald-600' : 'text-esRed'} uppercase mb-1">${card.type === 'org' ? 'Organisasi' : 'Tokoh'}</span>
+                            <span class="text-xs sm:text-sm font-bold text-stone-900 leading-snug">${card.text}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-            btn.classList.add('flipped', 'bg-white', 'border-nationalRed', 'text-nationalDark');
-            btn.innerHTML = `<span class="font-black">${card.text}</span>`;
-            flippedCards.push({ index, card, btn });
+        function flipCard(idx) {
+            const card = gameCards[idx];
+            if (card.isFlipped || card.isMatched || flippedCards.length >= 2) return;
+
+            card.isFlipped = true;
+            flippedCards.push({ idx, ...card });
+            renderGameBoard();
 
             if (flippedCards.length === 2) {
-                gameTries++;
-                document.getElementById('game-tries').innerText = gameTries;
-                checkMatch();
-            }
-        }
+                gameAttempts++;
+                document.getElementById('game-attempts').innerText = gameAttempts;
 
-        function checkMatch() {
-            isGameLocked = true;
-            const [c1, c2] = flippedCards;
-
-            if (c1.card.pairId === c2.card.pairId && c1.index !== c2.index) {
-                c1.btn.classList.add('bg-green-100', 'border-green-500', 'matched');
-                c2.btn.classList.add('bg-green-100', 'border-green-500', 'matched');
-                matchedPairs++;
-                document.getElementById('game-score').innerText = matchedPairs;
-                flippedCards = [];
-                isGameLocked = false;
-
-                if (matchedPairs === memoryPairs.length) {
-                    clearInterval(gameInterval);
-                    document.getElementById('game-win-stats').innerText = `Selesai dalam ${gameTries} percobaan dan waktu ${document.getElementById('game-timer').innerText}.`;
-                    document.getElementById('game-win-modal').classList.remove('hidden');
-                    document.getElementById('game-win-modal').classList.add('flex');
-                    markPageVisited('game');
-                }
-            } else {
-                setTimeout(() => {
-                    c1.btn.classList.remove('flipped', 'bg-white', 'border-nationalRed', 'text-nationalDark');
-                    c1.btn.className = "h-24 sm:h-28 rounded-2xl bg-nationalCream border-2 border-gray-300 font-bold text-xs sm:text-sm text-gray-400 flex items-center justify-center p-3 text-center transition transform hover:scale-105 shadow-sm";
-                    c1.btn.innerHTML = `<span>❓</span>`;
-
-                    c2.btn.classList.remove('flipped', 'bg-white', 'border-nationalRed', 'text-nationalDark');
-                    c2.btn.className = "h-24 sm:h-28 rounded-2xl bg-nationalCream border-2 border-gray-300 font-bold text-xs sm:text-sm text-gray-400 flex items-center justify-center p-3 text-center transition transform hover:scale-105 shadow-sm";
-                    c2.btn.innerHTML = `<span>❓</span>`;
-
+                const [c1, c2] = flippedCards;
+                if (c1.pairId === c2.pairId && c1.type !== c2.type) {
+                    // Match found
+                    gameCards[c1.idx].isMatched = true;
+                    gameCards[c2.idx].isMatched = true;
+                    matchedPairs++;
+                    document.getElementById('game-matches').innerText = `${matchedPairs} / 6`;
                     flippedCards = [];
-                    isGameLocked = false;
-                }, 1000);
-            }
-        }
 
-        function closeGameModal() {
-            document.getElementById('game-win-modal').classList.add('hidden');
-            document.getElementById('game-win-modal').classList.remove('flex');
-        }
+                    if (matchedPairs === 6) {
+                        clearInterval(gameTimerInterval);
+                        const mins = String(Math.floor(gameSeconds / 60)).padStart(2, '0');
+                        const secs = String(gameSeconds % 60).padStart(2, '0');
+                        document.getElementById('game-win-stats').innerText = `Kamu berhasil menyelesaikan permainan dalam waktu ${mins}:${secs} dengan ${gameAttempts} percobaan.`;
+                        document.getElementById('game-win-banner').classList.remove('hidden');
 
-        // --- EVALUATION QUIZ CONTROLLER ---
-
-        function renderQuizQuestion() {
-            const q = questionsData[currentQuizIdx];
-            document.getElementById('quiz-progress-label').innerText = `Soal ${currentQuizIdx + 1} dari ${questionsData.length}`;
-            document.getElementById('quiz-question-text').innerText = `${currentQuizIdx + 1}. ${q.q}`;
-            document.getElementById('quiz-feedback').innerHTML = '';
-            document.getElementById('quiz-submit-btn').innerText = "Jawab & Lanjut →";
-
-            const optionsList = document.getElementById('quiz-options-list');
-            optionsList.innerHTML = '';
-
-            q.options.forEach((opt, idx) => {
-                const label = document.createElement('label');
-                label.className = "flex items-center space-x-3 p-3.5 rounded-xl border border-gray-200 bg-gray-50/50 hover:bg-gray-50 cursor-pointer transition text-xs sm:text-sm font-semibold text-gray-700";
-                
-                const checked = userAnswers[currentQuizIdx] === idx ? 'checked' : '';
-                label.innerHTML = `
-                    <input type="radio" name="quiz_opt" value="${idx}" ${checked} class="text-nationalRed focus:ring-nationalRed w-4 h-4">
-                    <span>${opt}</span>
-                `;
-                optionsList.appendChild(label);
-            });
-        }
-
-        function submitQuizAnswer() {
-            const selected = document.querySelector('input[name="quiz_opt"]:checked');
-            if (!selected) {
-                // Custom non-alert warning notice inside feedback box instead of alert()
-                document.getElementById('quiz-feedback').innerHTML = `<span class="text-amber-600 font-bold">Harap pilih salah satu jawaban terlebih dahulu!</span>`;
-                return;
-            }
-
-            const chosenIdx = parseInt(selected.value);
-            userAnswers[currentQuizIdx] = chosenIdx;
-
-            const q = questionsData[currentQuizIdx];
-            const feedbackBox = document.getElementById('quiz-feedback');
-            
-            if (chosenIdx === q.answer) {
-                feedbackBox.innerHTML = `<span class="text-green-600 font-bold">✓ Benar!</span>`;
-            } else {
-                feedbackBox.innerHTML = `<span class="text-red-600 font-bold">✕ Kurang tepat.</span>`;
-            }
-
-            setTimeout(() => {
-                currentQuizIdx++;
-                if (currentQuizIdx < questionsData.length) {
-                    renderQuizQuestion();
+                        // Save progress
+                        const progress = getSavedProgress();
+                        progress.completedGame = true;
+                        saveProgressData(progress);
+                    }
                 } else {
-                    renderQuizResults();
+                    // Mismatch
+                    setTimeout(() => {
+                        gameCards[c1.idx].isFlipped = false;
+                        gameCards[c2.idx].isFlipped = false;
+                        flippedCards = [];
+                        renderGameBoard();
+                    }, 800);
                 }
-            }, 800);
+            }
         }
 
-        function renderQuizResults() {
-            let correct = 0;
-            questionsData.forEach((q, idx) => {
-                if (userAnswers[idx] === q.answer) correct++;
+        // --- 5. EVALUASI QUIZ LOGIC ---
+        function renderQuizQuestion() {
+            const q = quizQuestions[currentQuizIndex];
+            document.getElementById('quiz-counter').innerText = `PERTANYAAN ${String(currentQuizIndex + 1).padStart(2, '0')} / 20`;
+            const pct = Math.round(((currentQuizIndex + 1) / quizQuestions.length) * 100);
+            document.getElementById('quiz-progress-bar').style.width = pct + '%';
+            document.getElementById('quiz-question').innerText = q.question;
+
+            const optionsContainer = document.getElementById('quiz-options');
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const nextBtn = document.getElementById('quiz-next-btn');
+
+            feedbackBox.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+
+            const savedAns = quizAnswers[currentQuizIndex];
+
+            optionsContainer.innerHTML = q.options.map((opt, i) => {
+                let btnStyle = "w-full text-left p-4 rounded-2xl border border-stone-200 bg-white font-medium text-sm text-stone-800 hover:border-esRed hover:bg-red-50/30 transition-all";
+                if (savedAns !== null) {
+                    if (i === q.answer) {
+                        btnStyle = "w-full text-left p-4 rounded-2xl border border-emerald-500 bg-emerald-50 font-semibold text-sm text-emerald-900";
+                    } else if (i === savedAns && savedAns !== q.answer) {
+                        btnStyle = "w-full text-left p-4 rounded-2xl border border-red-500 bg-red-50 font-semibold text-sm text-red-900";
+                    } else {
+                        btnStyle = "w-full text-left p-4 rounded-2xl border border-stone-200 bg-stone-50 opacity-60 text-sm text-stone-500";
+                    }
+                }
+                return `
+                    <button onclick="selectQuizAnswer(${i})" ${savedAns !== null ? 'disabled' : ''} class="${btnStyle}">
+                        ${opt}
+                    </button>
+                `;
+            }).join('');
+
+            if (savedAns !== null) {
+                feedbackBox.classList.remove('hidden');
+                if (savedAns === q.answer) {
+                    feedbackBox.className = "p-4 rounded-2xl text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200";
+                    feedbackBox.innerText = "✓ Benar! Jawabanmu tepat.";
+                } else {
+                    feedbackBox.className = "p-4 rounded-2xl text-sm font-semibold bg-red-50 text-red-800 border border-red-200";
+                    feedbackBox.innerText = `✗ Kurang tepat. Jawaban yang benar adalah: ${q.options[q.answer]}`;
+                }
+                nextBtn.classList.remove('hidden');
+            }
+        }
+
+        function selectQuizAnswer(selectedIdx) {
+            quizAnswers[currentQuizIndex] = selectedIdx;
+            renderQuizQuestion();
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuizIndex < quizQuestions.length - 1) {
+                currentQuizIndex++;
+                renderQuizQuestion();
+            } else {
+                showQuizResult();
+            }
+        }
+
+        function showQuizResult() {
+            let correctCount = 0;
+            quizQuestions.forEach((q, idx) => {
+                if (quizAnswers[idx] === q.answer) correctCount++;
             });
+            const wrongCount = quizQuestions.length - correctCount;
+            const finalScore = Math.round((correctCount / quizQuestions.length) * 100);
 
-            const wrong = questionsData.length - correct;
-            const score = correct * 5;
-            const pct = Math.round((correct / questionsData.length) * 100);
+            quizScore = finalScore;
 
-            let msg = "";
-            if (score >= 90) msg = "Pemahamanmu terhadap materi Pergerakan Nasional sudah sangat baik.";
-            else if (score >= 75) msg = "Pemahamanmu sudah baik. Beberapa materi masih perlu diperkuat.";
-            else if (score >= 60) msg = "Pemahamanmu cukup. Coba pelajari kembali materi organisasi dan tokoh.";
-            else msg = "Nilai di bawah KKM. Silakan pelajari kembali modul materi organisasi dan video edukasi.";
+            document.getElementById('quiz-container').classList.add('hidden');
+            const resultCard = document.getElementById('quiz-result-card');
+            resultCard.classList.remove('hidden');
 
-            document.getElementById('quiz-box').classList.add('hidden');
-            const resBox = document.getElementById('quiz-results-box');
-            resBox.classList.remove('hidden');
-            resBox.innerHTML = `
-                <div class="w-16 h-16 bg-nationalRed text-white rounded-full flex items-center justify-center mx-auto text-2xl shadow-md">
-                    🎓
-                </div>
-                <div>
-                    <h3 class="text-2xl font-black text-nationalDark">Evaluasi Selesai</h3>
-                    <div class="text-4xl font-black text-nationalRed mt-2">${score} <span class="text-sm text-gray-400 font-normal">/ 100</span></div>
-                </div>
-                <div class="grid grid-cols-3 gap-3 max-w-sm mx-auto bg-nationalCream p-3 rounded-2xl border border-gray-200 text-xs font-bold text-gray-700">
-                    <div>Benar: <span class="text-green-600">${correct}</span></div>
-                    <div>Salah: <span class="text-red-600">${wrong}</span></div>
-                    <div>Akurasi: <span class="text-nationalDark">${pct}%</span></div>
-                </div>
-                <p class="text-xs sm:text-sm font-semibold text-gray-600 italic max-w-md mx-auto">${msg}</p>
-                <div class="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-                    <button onclick="resetQuiz()" class="bg-nationalCream hover:bg-gray-200 text-nationalDark font-bold py-3 px-6 rounded-xl text-xs border border-gray-200 transition">
-                        Ulangi Evaluasi
-                    </button>
-                    <button onclick="showPage('home')" class="bg-nationalRed hover:bg-nationalDarkRed text-white font-bold py-3 px-6 rounded-xl text-xs shadow transition">
-                        Kembali ke Beranda
-                    </button>
-                    <button onclick="showPage('videos')" class="bg-nationalDark hover:bg-black text-white font-bold py-3 px-6 rounded-xl text-xs shadow transition">
-                        Tonton Video Edukasi
-                    </button>
-                </div>
-            `;
-            markPageVisited('evaluation');
+            document.getElementById('result-score').innerText = finalScore;
+            document.getElementById('result-correct').innerText = correctCount;
+            document.getElementById('result-wrong').innerText = wrongCount;
+
+            const feedbackText = document.getElementById('result-feedback-text');
+            if (finalScore >= 80) {
+                feedbackText.innerText = "Luar biasa! Pemahamanmu tentang sejarah pergerakan nasional sudah sangat luar biasa. Pertahankan prestasi belajarmu!";
+            } else if (finalScore >= 60) {
+                feedbackText.innerText = "Bagus! Kamu sudah memahami sebagian besar materi, namun masih ada beberapa bagian yang perlu ditinjau kembali di menu Materi.";
+            } else {
+                feedbackText.innerText = "Jangan menyerah! Mari ulangi materi organisasi pergerakan nasional dan tonton kembali video edukasi untuk memperdalam pemahamanmu.";
+            }
+
+            // Save evaluation progress
+            const progress = getSavedProgress();
+            progress.completedEvaluation = true;
+            saveProgressData(progress);
         }
 
-        function resetQuiz() {
-            currentQuizIdx = 0;
-            userAnswers = {};
-            document.getElementById('quiz-results-box').classList.add('hidden');
-            document.getElementById('quiz-box').classList.remove('hidden');
+        function restartEvaluation() {
+            currentQuizIndex = 0;
+            quizAnswers = new Array(quizQuestions.length).fill(null);
+            document.getElementById('quiz-container').classList.remove('hidden');
+            document.getElementById('quiz-result-card').classList.add('hidden');
             renderQuizQuestion();
         }
 
-        // --- INITIALIZATION ---
-
+        // --- INITIALIZATION ON WINDOW LOAD ---
         window.onload = function() {
-            loadProgress();
-            renderTimeline();
-            renderVideoPlayer(currentVideoId);
-            renderVideoPlaylist();
-            renderRequiredChecklist();
-            renderOrganizations();
-            renderQuizQuestion();
+            updateGlobalProgress();
+            switchPage('home');
         };
     </script>
 </body>
